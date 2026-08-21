@@ -10,7 +10,7 @@
   :root{
     --bg:#FFFFFF; --ink:#1B1A18; --ink-soft:#5B5954; --ink-mute:#94918A;
     --line:#E4E2DC; --line-soft:#EEEDE8; --card:#FCFCFB;
-    --burgundy:#7E1D2B; --burgundy-tint:#F7E9EA; --up:#2E6B45; --down:#A32D2D; --recession:#EFECE6;
+    --burgundy:#7E1D2B; --burgundy-tint:#F7E9EA; --up:#2E6B45; --down:#A32D2D; --warn:#A5760B; --recession:#EFECE6;
   }
   *{box-sizing:border-box;}
   body{margin:0; background:var(--bg); color:var(--ink); font-family:'IBM Plex Sans',-apple-system,sans-serif; -webkit-font-smoothing:antialiased;}
@@ -75,6 +75,21 @@
   .narrative-headline{font-family:'Source Serif 4', serif; font-size:15px; font-weight:600; line-height:1.5; color:var(--ink); margin-bottom:6px;}
   .narrative-disclaimer{font-size:11px; color:var(--ink-soft); font-style:italic;}
   .chapter-narrative{font-size:12.5px; color:var(--ink-soft); margin:0 0 12px; padding:8px 12px; background:var(--line-soft); border-left:2px solid var(--burgundy); border-radius:0 4px 4px 0;}
+
+  .scoreboard{display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:10px; margin-bottom:26px;}
+  .signal{border:1px solid var(--line); border-left:4px solid var(--ink-mute); border-radius:4px; padding:10px 12px; background:var(--card);}
+  .signal.green{border-left-color:var(--up);} .signal.yellow{border-left-color:var(--warn);}
+  .signal.red{border-left-color:var(--down);} .signal.gray{border-left-color:var(--ink-mute);}
+  .signal-label{font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-mute); display:flex; justify-content:space-between; align-items:center;}
+  .signal-dot{width:8px; height:8px; border-radius:50%; display:inline-block; flex-shrink:0;}
+  .signal-dot.green{background:var(--up);} .signal-dot.yellow{background:var(--warn);}
+  .signal-dot.red{background:var(--down);} .signal-dot.gray{background:var(--ink-mute);}
+  .signal-detail{font-size:12.5px; color:var(--ink-soft); margin-top:5px; line-height:1.4;}
+
+  .house-view{border:1px dashed var(--line); border-radius:6px; padding:16px 18px; margin-bottom:26px; background:var(--line-soft);}
+  .house-view .section-title{border:none; margin-bottom:6px; padding-bottom:0;}
+  .house-view-pending{font-size:12.5px; color:var(--ink-mute); font-style:italic;}
+
   @media (max-width:760px){ .ticker{grid-template-columns:repeat(2,1fr);} .ticker-item:nth-child(2n){border-right:none;} }
 </style>
 </head>
@@ -89,6 +104,13 @@
   </div>
 
   <div class="narrative-banner" id="narrativeBanner"></div>
+
+  <div class="scoreboard" id="scoreboard"></div>
+
+  <div class="house-view">
+    <div class="section-title">House View</div>
+    <div class="house-view-pending">Pending — parameters being determined.</div>
+  </div>
 
   <div class="ticker" id="ticker"></div>
 
@@ -274,6 +296,16 @@ function renderNarrative(){
   el.innerHTML = `<div class="narrative-headline">${n.headline}</div><div class="narrative-disclaimer">${n.disclaimer||""}</div>`;
 }
 
+function renderScoreboard(){
+  const el = document.getElementById("scoreboard");
+  const sb = (DATA.narrative && DATA.narrative.scoreboard) || [];
+  if(!sb.length){ el.style.display = "none"; return; }
+  el.innerHTML = sb.map(s => `<div class="signal ${s.status}">
+      <div class="signal-label">${s.label}<span class="signal-dot ${s.status}"></span></div>
+      <div class="signal-detail">${s.detail}</div>
+    </div>`).join("");
+}
+
 function renderSections(){
   const cats = state.cat==="All" ? CATEGORIES.slice(1) : [state.cat];
   const el = document.getElementById("sections");
@@ -407,6 +439,7 @@ async function init(){
   DATA = await res.json();
   document.getElementById("asof").textContent = "Data as of " + new Date(DATA.generated_at).toLocaleString();
   renderNarrative();
+  renderScoreboard();
   renderTabs(); renderRanges(); renderTicker(); renderSections();
   renderCompareOptions(); renderCompare(); renderYoY();
 }
