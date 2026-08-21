@@ -243,14 +243,14 @@ function cardHtml(id){
       <div style="text-align:center; padding:20px 0; font-size:11.5px; color:var(--ink-mute);">unavailable</div></div>`;
   }
   const last = filtered[filtered.length-1], first = filtered[0];
-  const change = ((last.value-first.value)/first.value)*100;
-  const up = change >= 0;
+  const change = first.value === 0 ? null : ((last.value-first.value)/first.value)*100; // avoid divide-by-zero (e.g. binary 0/1 indicator series)
+  const up = change === null || change >= 0;
   const chart = buildChartSVG(filtered, {color: up ? "#2E6B45" : "#A32D2D"});
   return `<div class="card" data-id="${id}">
     <div class="card-top">
       <div><div class="card-name">${s.name}</div><div class="card-meta">${s.source.toUpperCase()} · ${id}</div></div>
       <div class="card-stats"><div class="card-value">${fmtValue(last.value, s.format)}</div>
-        <div class="card-change ${up?'up':'down'}">${up?'+':''}${change.toFixed(1)}% (${state.range})</div></div>
+        <div class="card-change ${up?'up':'down'}">${change===null ? '—' : (up?'+':'')+change.toFixed(1)+'% ('+state.range+')'}</div></div>
     </div>
     <div class="chart-box">${chart.svg}<div class="tooltip"></div></div>
   </div>`;
@@ -380,6 +380,7 @@ function yoyChange(points){
     if(diff < best){ best = diff; closest = p; }
   }
   if(best > 1000*60*60*24*45) return null; // no point within ~45 days of a year ago
+  if(closest.value === 0) return null; // avoid divide-by-zero (e.g. binary 0/1 indicator series)
   return ((last.value - closest.value)/closest.value)*100;
 }
 
