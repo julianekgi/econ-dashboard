@@ -192,8 +192,10 @@ def fetch_fred(series_id):
 
 
 def fetch_yahoo(symbol):
+    # range="max" silently downgrades to quarterly bars on Yahoo's end (still
+    # honors interval="1d" up through "10y"), so cap at 10y for daily data.
     url = f"https://query1.finance.yahoo.com/v8/finance/chart/{quote(symbol, safe='')}"
-    resp = requests.get(url, params={"range": "max", "interval": "1d"}, headers=HEADERS, timeout=25)
+    resp = requests.get(url, params={"range": "10y", "interval": "1d"}, headers=HEADERS, timeout=25)
     resp.raise_for_status()
     result = resp.json()["chart"]["result"][0]
     timestamps = result["timestamp"]
