@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Knight Group — Economic Data Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FFFFFF; --ink:#1B1A18; --ink-soft:#5B5954; --ink-mute:#94918A;
+    --line:#E4E2DC; --line-soft:#EEEDE8; --card:#FCFCFB;
+    --burgundy:#7E1D2B; --burgundy-tint:#F7E9EA; --up:#2E6B45; --down:#A32D2D; --recession:#EFECE6;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:'IBM Plex Sans',-apple-system,sans-serif; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1280px; margin:0 auto; padding:32px 28px 64px;}
+
+  .masthead{display:flex; align-items:flex-end; justify-content:space-between; border-bottom:1px solid var(--ink); padding-bottom:16px; margin-bottom:20px; flex-wrap:wrap; gap:12px;}
+  .masthead h1{font-family:'Source Serif 4', serif; font-weight:600; font-size:26px; margin:0; letter-spacing:-0.01em;}
+  .masthead .sub{font-size:12.5px; color:var(--ink-soft); margin-top:4px; font-family:'IBM Plex Mono', monospace;}
+  .masthead-right{text-align:right; font-family:'IBM Plex Mono', monospace; font-size:11.5px; color:var(--ink-mute);}
+
+  .ticker{display:grid; grid-template-columns:repeat(5,1fr); gap:0; margin-bottom:28px; border:1px solid var(--line);}
+  .ticker-item{padding:12px 16px; border-right:1px solid var(--line);}
+  .ticker-item:last-child{border-right:none;}
+  .ticker-label{font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-mute); margin-bottom:4px;}
+  .ticker-value{font-family:'IBM Plex Mono', monospace; font-size:19px; font-weight:500;}
+  .ticker-change{font-family:'IBM Plex Mono', monospace; font-size:11.5px; margin-top:2px;}
+  .ticker-change.up{color:var(--up);} .ticker-change.down{color:var(--down);}
+
+  .controls{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; margin-bottom:22px;}
+  .tabs{display:flex; gap:6px; flex-wrap:wrap;}
+  .tab, .range-btn{font-family:'IBM Plex Mono', monospace; font-size:12px; padding:6px 12px; border:1px solid var(--line); border-radius:3px; background:none; color:var(--ink-soft); cursor:pointer;}
+  .tab.active{background:var(--ink); color:#fff; border-color:var(--ink);}
+  .range-btn.active{background:var(--burgundy); color:#fff; border-color:var(--burgundy);}
+  .tab:hover:not(.active), .range-btn:hover:not(.active){border-color:var(--ink-mute);}
+  .ranges{display:flex; gap:6px;}
+
+  .section{margin-bottom:34px;}
+  .section-title{font-family:'Source Serif 4', serif; font-size:15px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin:0 0 12px; padding-bottom:6px; border-bottom:1px solid var(--line-soft);}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:14px;}
+
+  .card{border:1px solid var(--line); border-radius:6px; background:var(--card); padding:14px 16px 8px; position:relative;}
+  .card-top{display:flex; justify-content:space-between; align-items:flex-start;}
+  .card-name{font-size:13px; font-weight:500;}
+  .card-meta{font-size:10.5px; color:var(--ink-mute); font-family:'IBM Plex Mono', monospace; margin-top:2px;}
+  .card-stats{text-align:right;}
+  .card-value{font-family:'IBM Plex Mono', monospace; font-size:16px; font-weight:500;}
+  .card-change{font-family:'IBM Plex Mono', monospace; font-size:11px;}
+  .card-change.up{color:var(--up);} .card-change.down{color:var(--down);}
+  .chart-box{height:110px; margin-top:8px; position:relative;}
+  .chart-box svg{width:100%; height:100%; display:block; overflow:visible;}
+  .tooltip{position:absolute; pointer-events:none; background:var(--ink); color:#fff; font-family:'IBM Plex Mono',monospace; font-size:10.5px; padding:3px 7px; border-radius:3px; transform:translate(-50%,-130%); white-space:nowrap; opacity:0; transition:opacity 0.1s;}
+
+  /* Compare panel */
+  .compare{border:1px solid var(--line); border-radius:6px; padding:16px 18px; margin-bottom:34px; background:var(--card);}
+  .compare-controls{display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:12px;}
+  .compare-controls select{font-family:'IBM Plex Mono',monospace; font-size:12px; padding:6px 8px; border:1px solid var(--line); border-radius:3px; background:#fff; color:var(--ink);}
+  .compare-legend{display:flex; gap:16px; font-size:12px; margin-bottom:6px;}
+  .compare-legend span{display:inline-flex; align-items:center; gap:5px;}
+  .swatch{width:10px; height:10px; border-radius:2px; display:inline-block;}
+  .compare-chart{height:220px;}
+
+  /* YoY table */
+  table.yoy{width:100%; border-collapse:collapse; font-size:12.5px;}
+  table.yoy th{text-align:left; font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-mute); padding:6px 10px; border-bottom:1px solid var(--ink);}
+  table.yoy td{padding:6px 10px; border-bottom:1px solid var(--line-soft); font-family:'IBM Plex Mono',monospace;}
+  table.yoy td.name{font-family:'IBM Plex Sans',sans-serif;}
+  table.yoy tr:hover{background:var(--line-soft);}
+
+  footer{margin-top:36px; padding-top:16px; border-top:1px solid var(--line); font-size:11.5px; color:var(--ink-mute); line-height:1.6;}
+
+  .narrative-banner{border:1px solid var(--ink); border-radius:6px; padding:16px 18px; margin-bottom:26px; background:var(--burgundy-tint);}
+  .narrative-headline{font-family:'Source Serif 4', serif; font-size:15px; font-weight:600; line-height:1.5; color:var(--ink); margin-bottom:6px;}
+  .narrative-disclaimer{font-size:11px; color:var(--ink-soft); font-style:italic;}
+  .chapter-narrative{font-size:12.5px; color:var(--ink-soft); margin:0 0 12px; padding:8px 12px; background:var(--line-soft); border-left:2px solid var(--burgundy); border-radius:0 4px 4px 0;}
+  @media (max-width:760px){ .ticker{grid-template-columns:repeat(2,1fr);} .ticker-item:nth-child(2n){border-right:none;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <div>
+      <h1>Knight Group — Economic Data Pack</h1>
+      <div class="sub">Auto-refreshed daily via GitHub Actions</div>
+    </div>
+    <div class="masthead-right" id="asof">Loading…</div>
+  </div>
+
+  <div class="narrative-banner" id="narrativeBanner"></div>
+
+  <div class="ticker" id="ticker"></div>
+
+  <div class="controls">
+    <div class="tabs" id="tabs"></div>
+    <div class="ranges" id="ranges"></div>
+  </div>
+
+  <div class="compare">
+    <div class="section-title" style="border:none; margin-bottom:8px;">Compare (indexed to 100)</div>
+    <div class="compare-controls">
+      <label style="font-size:12px; color:var(--ink-soft);">Series A</label>
+      <select id="compareA"></select>
+      <label style="font-size:12px; color:var(--ink-soft);">Series B</label>
+      <select id="compareB"></select>
+    </div>
+    <div class="compare-legend" id="compareLegend"></div>
+    <div class="compare-chart" id="compareChart"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Year-over-year change</div>
+    <table class="yoy" id="yoyTable"></table>
+  </div>
+
+  <div id="sections"></div>
+
+  <footer>
+    Data from the St. Louis Fed (FRED) and Stooq, refreshed daily by a GitHub Actions workflow — see the repository for the schedule. Gray bands mark NBER-designated recessions. Fed data typically lags by a release cycle; market data is end-of-day.
+  </footer>
+</div>
+
+<script>
+const CATEGORIES = ["All","Growth & business cycle","Labor market","Consumer health","Housing","Inflation","Monetary policy & rates","Credit conditions","Markets & risk sentiment","Trade & global","Commodities & energy","Demographics & structural","Private markets signals"];
+const RANGES = [{k:"1Y",days:365},{k:"5Y",days:365*5},{k:"10Y",days:365*10},{k:"Max",days:999999}];
+const TICKER_IDS = ["^spx","DGS10","DCOILWTICO","UNRATE"];
+const SERIES_COLOR_A = "#7E1D2B";
+const SERIES_COLOR_B = "#3B5166";
+
+let DATA = null;
+let state = { cat:"All", range:"5Y" };
+
+function fmtValue(v, fmt){
+  if(v==null || isNaN(v)) return "—";
+  const scale = fmt.scale ?? 1;
+  const dec = fmt.dec ?? (fmt.fmt==="pct" ? 1 : fmt.fmt==="index" ? 1 : 2);
+  let x = v * scale;
+  let s;
+  if(fmt.fmt==="usd") s = "$" + x.toLocaleString(undefined,{minimumFractionDigits:dec,maximumFractionDigits:dec});
+  else if(fmt.fmt==="pct") s = x.toFixed(dec) + "%";
+  else s = x.toLocaleString(undefined,{minimumFractionDigits:dec,maximumFractionDigits:dec});
+  if(fmt.unit) s += fmt.unit;
+  return s;
+}
+
+function parsePoints(raw){
+  return raw.map(([d,v]) => ({date:new Date(d), value:v}));
+}
+
+function filterRange(points, key){
+  if(key==="Max") return points;
+  const days = RANGES.find(r=>r.k===key).days;
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-days);
+  return points.filter(p=>p.date>=cutoff);
+}
+
+function overlappingRecessions(points){
+  if(!DATA.recession_periods || !points.length) return [];
+  const lo = points[0].date, hi = points[points.length-1].date;
+  return DATA.recession_periods
+    .map(([s,e])=>[new Date(s), new Date(e)])
+    .filter(([s,e]) => e>=lo && s<=hi)
+    .map(([s,e])=>[s<lo?lo:s, e>hi?hi:e]);
+}
+
+function buildChartSVG(points, opts){
+  const w = opts.w ?? 600, h = opts.h ?? 200;
+  const padL = 38, padR = 8, padT = 10, padB = 18;
+  const innerW = w-padL-padR, innerH = h-padT-padB;
+  if(points.length < 2){
+    return {svg:`<svg viewBox="0 0 ${w} ${h}"></svg>`, xScale:null, yScale:null, points:[]};
+  }
+  const vals = points.map(p=>p.value);
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const span = (max-min) || 1;
+  const t0 = points[0].date.getTime(), t1 = points[points.length-1].date.getTime();
+  const tspan = (t1-t0) || 1;
+
+  const xScale = t => padL + ((t-t0)/tspan)*innerW;
+  const yScale = v => padT + innerH - ((v-min)/span)*innerH;
+
+  const path = points.map((p,i)=> (i===0?"M":"L") + xScale(p.date.getTime()).toFixed(1) + "," + yScale(p.value).toFixed(1)).join(" ");
+
+  let bands = "";
+  for(const [s,e] of overlappingRecessions(points)){
+    const x1 = xScale(s.getTime()), x2 = xScale(e.getTime());
+    bands += `<rect x="${x1.toFixed(1)}" y="${padT}" width="${Math.max(1,x2-x1).toFixed(1)}" height="${innerH}" fill="var(--recession)"/>`;
+  }
+
+  const gridlines = [min, (min+max)/2, max].map(v=>{
+    const y = yScale(v);
+    return `<line x1="${padL}" x2="${w-padR}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--line-soft)" stroke-width="1"/>
+            <text x="${padL-6}" y="${(y+3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--ink-mute)" font-family="IBM Plex Mono, monospace">${v>=1000?Math.round(v).toLocaleString():v.toFixed(1)}</text>`;
+  }).join("");
+
+  const dateLabel = d => d.toLocaleDateString(undefined,{month:"short", year:"2-digit"});
+  const xLabels = `<text x="${padL}" y="${h-4}" font-size="9" fill="var(--ink-mute)" font-family="IBM Plex Mono, monospace">${dateLabel(points[0].date)}</text>
+                    <text x="${w-padR}" y="${h-4}" text-anchor="end" font-size="9" fill="var(--ink-mute)" font-family="IBM Plex Mono, monospace">${dateLabel(points[points.length-1].date)}</text>`;
+
+  const color = opts.color ?? "#7E1D2B";
+  const svg = `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+      ${bands}${gridlines}
+      <path d="${path}" fill="none" stroke="${color}" stroke-width="1.6" vector-effect="non-scaling-stroke"/>
+      ${xLabels}
+    </svg>`;
+  return {svg, xScale, yScale, points, padL, padR, w, h, t0, t1};
+}
+
+function attachHover(container, chartData, fmt){
+  const svgEl = container.querySelector("svg");
+  const tooltip = container.querySelector(".tooltip");
+  if(!svgEl || !tooltip || !chartData.xScale) return;
+  const rectHit = document.createElementNS("http://www.w3.org/2000/svg","rect");
+  rectHit.setAttribute("x",0); rectHit.setAttribute("y",0);
+  rectHit.setAttribute("width", chartData.w); rectHit.setAttribute("height", chartData.h);
+  rectHit.setAttribute("fill","transparent");
+  svgEl.appendChild(rectHit);
+
+  svgEl.addEventListener("mousemove", e=>{
+    const bbox = svgEl.getBoundingClientRect();
+    const relX = (e.clientX - bbox.left) / bbox.width * chartData.w;
+    const t = chartData.t0 + ((relX - chartData.padL) / (chartData.w - chartData.padL - chartData.padR)) * (chartData.t1 - chartData.t0);
+    let nearest = chartData.points[0], best = Infinity;
+    for(const p of chartData.points){
+      const diff = Math.abs(p.date.getTime() - t);
+      if(diff < best){ best = diff; nearest = p; }
+    }
+    tooltip.style.opacity = 1;
+    tooltip.style.left = (bbox.width * ((chartData.xScale(nearest.date.getTime()))/chartData.w)) + "px";
+    tooltip.style.top = "0px";
+    tooltip.textContent = nearest.date.toLocaleDateString() + " · " + fmtValue(nearest.value, fmt);
+  });
+  svgEl.addEventListener("mouseleave", ()=>{ tooltip.style.opacity = 0; });
+}
+
+function cardHtml(id){
+  const s = DATA.series[id];
+  const points = parsePoints(s.points);
+  const filtered = filterRange(points, state.range);
+  if(s.error || filtered.length < 2){
+    return `<div class="card"><div class="card-top"><div class="card-name">${s.name}</div></div>
+      <div style="text-align:center; padding:20px 0; font-size:11.5px; color:var(--ink-mute);">unavailable</div></div>`;
+  }
+  const last = filtered[filtered.length-1], first = filtered[0];
+  const change = ((last.value-first.value)/first.value)*100;
+  const up = change >= 0;
+  const chart = buildChartSVG(filtered, {color: up ? "#2E6B45" : "#A32D2D"});
+  return `<div class="card" data-id="${id}">
+    <div class="card-top">
+      <div><div class="card-name">${s.name}</div><div class="card-meta">${s.source.toUpperCase()} · ${id}</div></div>
+      <div class="card-stats"><div class="card-value">${fmtValue(last.value, s.format)}</div>
+        <div class="card-change ${up?'up':'down'}">${up?'+':''}${change.toFixed(1)}% (${state.range})</div></div>
+    </div>
+    <div class="chart-box">${chart.svg}<div class="tooltip"></div></div>
+  </div>`;
+}
+
+function renderTabs(){
+  document.getElementById("tabs").innerHTML = CATEGORIES.map(c=>
+    `<button class="tab ${c===state.cat?'active':''}" onclick="setCat('${c.replace(/'/g,"\\'")}')">${c}</button>`).join("");
+}
+function renderRanges(){
+  document.getElementById("ranges").innerHTML = RANGES.map(r=>
+    `<button class="range-btn ${r.k===state.range?'active':''}" onclick="setRange('${r.k}')">${r.k}</button>`).join("");
+}
+function setCat(c){ state.cat=c; renderTabs(); renderSections(); }
+function setRange(r){ state.range=r; renderRanges(); renderSections(); renderCompare(); }
+
+function renderNarrative(){
+  const n = DATA.narrative;
+  const el = document.getElementById("narrativeBanner");
+  if(!n || !n.headline){ el.style.display = "none"; return; }
+  el.innerHTML = `<div class="narrative-headline">${n.headline}</div><div class="narrative-disclaimer">${n.disclaimer||""}</div>`;
+}
+
+function renderSections(){
+  const cats = state.cat==="All" ? CATEGORIES.slice(1) : [state.cat];
+  const el = document.getElementById("sections");
+  const chapterText = (DATA.narrative && DATA.narrative.chapters) || {};
+  el.innerHTML = cats.map(cat=>{
+    const ids = Object.keys(DATA.series).filter(id=>DATA.series[id].category===cat);
+    const blurb = chapterText[cat] ? `<div class="chapter-narrative">${chapterText[cat]}</div>` : "";
+    return `<div class="section"><div class="section-title">${cat}</div>${blurb}<div class="grid">${ids.map(cardHtml).join("")}</div></div>`;
+  }).join("");
+  cats.forEach(cat=>{
+    Object.keys(DATA.series).filter(id=>DATA.series[id].category===cat).forEach(id=>{
+      const s = DATA.series[id];
+      if(s.error) return;
+      const points = filterRange(parsePoints(s.points), state.range);
+      if(points.length<2) return;
+      const container = document.querySelector(`.card[data-id="${id}"] .chart-box`);
+      if(!container) return;
+      const up = points[points.length-1].value >= points[0].value;
+      const chart = buildChartSVG(points, {color: up?"#2E6B45":"#A32D2D"});
+      attachHover(container, chart, s.format);
+    });
+  });
+}
+
+function renderTicker(){
+  const el = document.getElementById("ticker");
+  el.innerHTML = TICKER_IDS.map(id=>{
+    const s = DATA.series[id];
+    if(!s || s.error){
+      return `<div class="ticker-item"><div class="ticker-label">${id}</div><div class="ticker-value">—</div><div class="ticker-change">unavailable</div></div>`;
+    }
+    const points = parsePoints(s.points);
+    const last = points[points.length-1], prev = points[points.length-2] || last;
+    const change = ((last.value-prev.value)/prev.value)*100;
+    const up = change>=0;
+    return `<div class="ticker-item"><div class="ticker-label">${s.name}</div>
+      <div class="ticker-value">${fmtValue(last.value, s.format)}</div>
+      <div class="ticker-change ${up?'up':'down'}">${up?'+':''}${change.toFixed(2)}%</div></div>`;
+  }).join("") + `<div class="ticker-item"><div class="ticker-label">Coverage</div><div class="ticker-value">${Object.keys(DATA.series).length} series</div><div class="ticker-change">6 sections</div></div>`;
+}
+
+function renderCompareOptions(){
+  const opts = Object.keys(DATA.series).map(id=>`<option value="${id}">${DATA.series[id].name}</option>`).join("");
+  document.getElementById("compareA").innerHTML = opts;
+  document.getElementById("compareB").innerHTML = opts;
+  document.getElementById("compareA").value = "UNRATE" in DATA.series ? "UNRATE" : Object.keys(DATA.series)[0];
+  document.getElementById("compareB").value = "^spx" in DATA.series ? "^spx" : Object.keys(DATA.series)[1];
+  document.getElementById("compareA").addEventListener("change", renderCompare);
+  document.getElementById("compareB").addEventListener("change", renderCompare);
+}
+
+function indexTo100(points){
+  if(!points.length) return [];
+  const base = points[0].value || 1;
+  return points.map(p=>({date:p.date, value:(p.value/base)*100}));
+}
+
+function renderCompare(){
+  const idA = document.getElementById("compareA").value;
+  const idB = document.getElementById("compareB").value;
+  const sA = DATA.series[idA], sB = DATA.series[idB];
+  const legend = document.getElementById("compareLegend");
+  legend.innerHTML = `<span><span class="swatch" style="background:${SERIES_COLOR_A}"></span>${sA.name}</span>
+                       <span><span class="swatch" style="background:${SERIES_COLOR_B}"></span>${sB.name}</span>`;
+
+  const ptsA = indexTo100(filterRange(parsePoints(sA.points), state.range));
+  const ptsB = indexTo100(filterRange(parsePoints(sB.points), state.range));
+  const all = ptsA.concat(ptsB);
+  if(all.length < 2){
+    document.getElementById("compareChart").innerHTML = `<div style="padding:40px; text-align:center; color:var(--ink-mute); font-size:12px;">not enough data</div>`;
+    return;
+  }
+  const w=1100, h=220, padL=44, padR=12, padT=10, padB=20;
+  const innerW=w-padL-padR, innerH=h-padT-padB;
+  const vals = all.map(p=>p.value);
+  const min = Math.min(...vals), max = Math.max(...vals), span=(max-min)||1;
+  const t0 = Math.min(ptsA[0]?.date.getTime()??Infinity, ptsB[0]?.date.getTime()??Infinity);
+  const t1 = Math.max(ptsA[ptsA.length-1]?.date.getTime()??-Infinity, ptsB[ptsB.length-1]?.date.getTime()??-Infinity);
+  const tspan=(t1-t0)||1;
+  const xScale = t => padL + ((t-t0)/tspan)*innerW;
+  const yScale = v => padT + innerH - ((v-min)/span)*innerH;
+  const pathOf = pts => pts.map((p,i)=>(i===0?"M":"L")+xScale(p.date.getTime()).toFixed(1)+","+yScale(p.value).toFixed(1)).join(" ");
+
+  const gridlines = [min,(min+max)/2,max].map(v=>{
+    const y=yScale(v);
+    return `<line x1="${padL}" x2="${w-padR}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--line-soft)"/>
+            <text x="${padL-6}" y="${(y+3).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--ink-mute)" font-family="IBM Plex Mono, monospace">${v.toFixed(0)}</text>`;
+  }).join("");
+
+  document.getElementById("compareChart").innerHTML = `<svg viewBox="0 0 ${w} ${h}" style="width:100%; height:100%;" preserveAspectRatio="none">
+      ${gridlines}
+      <path d="${pathOf(ptsA)}" fill="none" stroke="${SERIES_COLOR_A}" stroke-width="2"/>
+      <path d="${pathOf(ptsB)}" fill="none" stroke="${SERIES_COLOR_B}" stroke-width="2"/>
+    </svg>`;
+}
+
+function yoyChange(points){
+  if(points.length < 2) return null;
+  const last = points[points.length-1];
+  const targetTime = new Date(last.date); targetTime.setFullYear(targetTime.getFullYear()-1);
+  let closest = points[0], best = Infinity;
+  for(const p of points){
+    const diff = Math.abs(p.date.getTime()-targetTime.getTime());
+    if(diff < best){ best = diff; closest = p; }
+  }
+  if(best > 1000*60*60*24*45) return null; // no point within ~45 days of a year ago
+  return ((last.value - closest.value)/closest.value)*100;
+}
+
+function renderYoY(){
+  const rows = Object.keys(DATA.series).map(id=>{
+    const s = DATA.series[id];
+    if(s.error) return null;
+    const points = parsePoints(s.points);
+    const change = yoyChange(points);
+    const last = points[points.length-1];
+    return {name:s.name, cat:s.category, change, last, fmt:s.format};
+  }).filter(Boolean).sort((a,b)=> (b.change??-999) - (a.change??-999));
+
+  const rowsHtml = rows.map(r=>`<tr><td class="name">${r.name}</td><td>${r.cat}</td>
+      <td>${fmtValue(r.last.value, r.fmt)}</td>
+      <td style="color:${r.change==null?'var(--ink-mute)':(r.change>=0?'var(--up)':'var(--down)')}">${r.change==null?'—':(r.change>=0?'+':'')+r.change.toFixed(1)+'%'}</td></tr>`).join("");
+
+  document.getElementById("yoyTable").innerHTML = `<tr><th>Series</th><th>Category</th><th>Latest</th><th>YoY change</th></tr>${rowsHtml}`;
+}
+
+async function init(){
+  const res = await fetch('data/all_series.json');
+  DATA = await res.json();
+  document.getElementById("asof").textContent = "Data as of " + new Date(DATA.generated_at).toLocaleString();
+  renderNarrative();
+  renderTabs(); renderRanges(); renderTicker(); renderSections();
+  renderCompareOptions(); renderCompare(); renderYoY();
+}
+init();
+</script>
+</body>
+</html>
