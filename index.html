@@ -264,7 +264,7 @@ function renderRanges(){
   document.getElementById("ranges").innerHTML = RANGES.map(r=>
     `<button class="range-btn ${r.k===state.range?'active':''}" onclick="setRange('${r.k}')">${r.k}</button>`).join("");
 }
-function setCat(c){ state.cat=c; renderTabs(); renderSections(); }
+function setCat(c){ state.cat=c; renderTabs(); renderSections(); renderYoY(); }
 function setRange(r){ state.range=r; renderRanges(); renderSections(); renderCompare(); }
 
 function renderNarrative(){
@@ -384,7 +384,8 @@ function yoyChange(points){
 }
 
 function renderYoY(){
-  const rows = Object.keys(DATA.series).map(id=>{
+  const rows = Object.keys(DATA.series).filter(id=>
+      state.cat==="All" || DATA.series[id].category===state.cat).map(id=>{
     const s = DATA.series[id];
     if(s.error) return null;
     const points = parsePoints(s.points);
