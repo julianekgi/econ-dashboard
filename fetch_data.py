@@ -176,8 +176,10 @@ RECESSION_SERIES_ID = "USREC"
 # ---------------------------------------------------------------------------
 
 def fetch_fred(series_id):
+    # FRED's server hangs to a read timeout when sent a browser-style User-Agent
+    # (unclear why) but responds instantly to requests' default UA -- leave it off.
     url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}"
-    resp = requests.get(url, headers=HEADERS, timeout=25)
+    resp = requests.get(url, timeout=25)
     resp.raise_for_status()
     reader = csv.reader(io.StringIO(resp.text))
     rows = list(reader)[1:]
