@@ -14,6 +14,7 @@ Local test run (optional):
 import csv
 import io
 import json
+import time
 from datetime import datetime, timedelta, timezone
 from urllib.parse import quote
 
@@ -420,6 +421,7 @@ def main():
     }
 
     for s in SERIES:
+        t0 = time.monotonic()
         try:
             points = fetch_fred(s["id"]) if s["src"] == "fred" else fetch_yahoo(s["id"])
             output["series"][s["id"]] = {
@@ -427,13 +429,13 @@ def main():
                 "format": {k: v for k, v in s.items() if k in ("fmt", "unit", "dec", "scale")},
                 "points": points, "error": None,
             }
-            print(f"[ok] {s['name']} ({s['id']}): {len(points)} points")
+            print(f"[ok] {s['name']} ({s['id']}): {len(points)} points ({time.monotonic()-t0:.1f}s)", flush=True)
         except Exception as e:
             output["series"][s["id"]] = {
                 "name": s["name"], "category": s["cat"], "source": s["src"],
                 "format": {}, "points": [], "error": str(e),
             }
-            print(f"[FAILED] {s['name']} ({s['id']}): {e}")
+            print(f"[FAILED] {s['name']} ({s['id']}): {e} ({time.monotonic()-t0:.1f}s)", flush=True)
 
     for d in DERIVED:
         compute_derived(output, d)
