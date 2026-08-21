@@ -1,7 +1,7 @@
 """
-Fetches every configured series from FRED and Stooq, computes derived series
-(spreads, ratios, YoY growth rates), builds a rules-based narrative summary,
-and writes data/all_series.json.
+Fetches every configured series from FRED and Yahoo Finance, computes derived
+series (spreads, ratios, YoY growth rates), builds a rules-based narrative
+summary, and writes data/all_series.json.
 
 Runs inside .github/workflows/update-data.yml on GitHub Actions, which has
 normal unrestricted internet access.
@@ -15,15 +15,23 @@ import csv
 import io
 import json
 from datetime import datetime, timedelta, timezone
+from urllib.parse import quote
 
 import requests
+
+# Yahoo Finance's chart endpoint 429s any request that looks scripted (including
+# requests' default "python-requests/x.x" User-Agent) -- a browser UA is required.
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                  "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+}
 
 # ---------------------------------------------------------------------------
 # SERIES -- organized by the story chapter they belong to, not a filing-cabinet
 # category. Add a line here to track something new.
 # ---------------------------------------------------------------------------
 # src: "fred"  -> id is a FRED series ID
-# src: "stooq" -> id is a Stooq ticker
+# src: "yahoo" -> id is a Yahoo Finance ticker
 
 SERIES = [
     # ---- Growth & business cycle: is the economy expanding or slowing? ----
@@ -108,17 +116,17 @@ SERIES = [
     dict(id="NFCI",        name="Chicago Fed financial conditions index", cat="Credit conditions", src="fred", fmt="index", dec=2),
 
     # ---- Markets & risk sentiment ----
-    dict(id="^spx",        name="S&P 500",                             cat="Markets & risk sentiment", src="stooq", fmt="number", dec=2),
-    dict(id="^dji",        name="Dow Jones industrial average",       cat="Markets & risk sentiment", src="stooq", fmt="number", dec=2),
-    dict(id="^ndq",        name="Nasdaq Composite",                    cat="Markets & risk sentiment", src="stooq", fmt="number", dec=2),
-    dict(id="^rut",        name="Russell 2000",                        cat="Markets & risk sentiment", src="stooq", fmt="number", dec=2),
+    dict(id="^GSPC",       name="S&P 500",                             cat="Markets & risk sentiment", src="yahoo", fmt="number", dec=2),
+    dict(id="^DJI",        name="Dow Jones industrial average",       cat="Markets & risk sentiment", src="yahoo", fmt="number", dec=2),
+    dict(id="^IXIC",       name="Nasdaq Composite",                    cat="Markets & risk sentiment", src="yahoo", fmt="number", dec=2),
+    dict(id="^RUT",        name="Russell 2000",                        cat="Markets & risk sentiment", src="yahoo", fmt="number", dec=2),
     dict(id="VIXCLS",      name="VIX (volatility index)",              cat="Markets & risk sentiment", src="fred", fmt="index", dec=2),
-    dict(id="xauusd",      name="Gold",                                 cat="Markets & risk sentiment", src="stooq", fmt="usd", unit="/oz", dec=2),
-    dict(id="xagusd",      name="Silver",                               cat="Markets & risk sentiment", src="stooq", fmt="usd", unit="/oz", dec=2),
-    dict(id="btcusd",      name="Bitcoin",                              cat="Markets & risk sentiment", src="stooq", fmt="usd", dec=0),
-    dict(id="ethusd",      name="Ethereum",                             cat="Markets & risk sentiment", src="stooq", fmt="usd", dec=2),
-    dict(id="knx.us",      name="KNX stock price",                     cat="Markets & risk sentiment", src="stooq", fmt="usd", dec=2),
-    dict(id="vnq.us",      name="REIT index proxy (Vanguard VNQ)",     cat="Markets & risk sentiment", src="stooq", fmt="usd", dec=2),
+    dict(id="GC=F",        name="Gold",                                 cat="Markets & risk sentiment", src="yahoo", fmt="usd", unit="/oz", dec=2),
+    dict(id="SI=F",        name="Silver",                               cat="Markets & risk sentiment", src="yahoo", fmt="usd", unit="/oz", dec=2),
+    dict(id="BTC-USD",     name="Bitcoin",                              cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=0),
+    dict(id="ETH-USD",     name="Ethereum",                             cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
+    dict(id="KNX",         name="KNX stock price",                     cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
+    dict(id="VNQ",         name="REIT index proxy (Vanguard VNQ)",     cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
 
     # ---- Trade & global ----
     dict(id="BOPGSTB",     name="Trade balance",                       cat="Trade & global", src="fred", fmt="usd", unit="M", dec=0),
@@ -135,7 +143,7 @@ SERIES = [
     dict(id="GASREGW",     name="Retail gas price",                    cat="Commodities & energy", src="fred", fmt="usd", unit="/gal", dec=2),
     dict(id="DHHNGSP",     name="Natural gas (Henry Hub)",             cat="Commodities & energy", src="fred", fmt="usd", unit="/MMBtu", dec=2),
     dict(id="PCOPPUSDM",   name="Copper",                               cat="Commodities & energy", src="fred", fmt="usd", unit="/mt", dec=0),
-    dict(id="xptusd",      name="Platinum",                             cat="Commodities & energy", src="stooq", fmt="usd", unit="/oz", dec=2),
+    dict(id="PL=F",        name="Platinum",                             cat="Commodities & energy", src="yahoo", fmt="usd", unit="/oz", dec=2),
 
     # ---- Demographics & structural ----
     dict(id="POPTHM",      name="US population",                       cat="Demographics & structural", src="fred", fmt="number", scale=0.001, unit="M", dec=1),
@@ -144,7 +152,7 @@ SERIES = [
     dict(id="ULCNFB",      name="Unit labor costs",                    cat="Demographics & structural", src="fred", fmt="index", dec=1),
 
     # ---- Private-markets-adjacent proxies (no direct PE/VC data is public) ----
-    dict(id="ipo.us",      name="IPO market proxy (Renaissance IPO ETF)", cat="Private markets signals", src="stooq", fmt="usd", dec=2),
+    dict(id="IPO",         name="IPO market proxy (Renaissance IPO ETF)", cat="Private markets signals", src="yahoo", fmt="usd", dec=2),
 ]
 
 # Derived series -- computed after the raw fetch, using simple math on one or two series
@@ -154,7 +162,7 @@ DERIVED = [
     dict(op="subtract", id="BRENT_WTI_SPREAD", name="Brent-WTI oil spread",
          cat="Commodities & energy", a="DCOILBRENTEU", b="DCOILWTICO", fmt="usd", unit="/bbl", dec=2),
     dict(op="divide100", id="SMALLCAP_LARGECAP_RATIO", name="Small-cap / large-cap ratio (Russell 2000 vs S&P 500)",
-         cat="Private markets signals", a="^rut", b="^spx", fmt="number", dec=2),
+         cat="Private markets signals", a="^RUT", b="^GSPC", fmt="number", dec=2),
     dict(op="yoy_series", id="M2_YOY_GROWTH", name="M2 money supply growth (YoY)",
          cat="Private markets signals", a="M2SL", fmt="pct", dec=1),
 ]
@@ -168,7 +176,7 @@ RECESSION_SERIES_ID = "USREC"
 
 def fetch_fred(series_id):
     url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}"
-    resp = requests.get(url, timeout=25)
+    resp = requests.get(url, headers=HEADERS, timeout=25)
     resp.raise_for_status()
     reader = csv.reader(io.StringIO(resp.text))
     rows = list(reader)[1:]
@@ -183,20 +191,19 @@ def fetch_fred(series_id):
     return out
 
 
-def fetch_stooq(symbol):
-    url = f"https://stooq.com/q/d/l/?s={symbol}&i=d"
-    resp = requests.get(url, timeout=25)
+def fetch_yahoo(symbol):
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{quote(symbol, safe='')}"
+    resp = requests.get(url, params={"range": "max", "interval": "1d"}, headers=HEADERS, timeout=25)
     resp.raise_for_status()
-    reader = csv.reader(io.StringIO(resp.text))
-    rows = list(reader)[1:]
+    result = resp.json()["chart"]["result"][0]
+    timestamps = result["timestamp"]
+    closes = result["indicators"]["quote"][0]["close"]
     out = []
-    for r in rows:
-        if len(r) < 5 or r[4] in ("", "N/D"):
+    for ts, close in zip(timestamps, closes):
+        if close is None:
             continue
-        try:
-            out.append([r[0], float(r[4])])
-        except ValueError:
-            continue
+        date = datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%d")
+        out.append([date, float(close)])
     return out
 
 
@@ -359,7 +366,7 @@ def build_narrative(output):
         )
 
     vix = trend(output, "VIXCLS", 1, 10.0)
-    spx = trend(output, "^spx", 6, 3.0)
+    spx = trend(output, "^GSPC", 6, 3.0)
     if vix or spx:
         parts = []
         if spx:
@@ -412,7 +419,7 @@ def main():
 
     for s in SERIES:
         try:
-            points = fetch_fred(s["id"]) if s["src"] == "fred" else fetch_stooq(s["id"])
+            points = fetch_fred(s["id"]) if s["src"] == "fred" else fetch_yahoo(s["id"])
             output["series"][s["id"]] = {
                 "name": s["name"], "category": s["cat"], "source": s["src"],
                 "format": {k: v for k, v in s.items() if k in ("fmt", "unit", "dec", "scale")},

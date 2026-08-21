@@ -117,14 +117,14 @@
   <div id="sections"></div>
 
   <footer>
-    Data from the St. Louis Fed (FRED) and Stooq, refreshed daily by a GitHub Actions workflow — see the repository for the schedule. Gray bands mark NBER-designated recessions. Fed data typically lags by a release cycle; market data is end-of-day.
+    Data from the St. Louis Fed (FRED) and Yahoo Finance, refreshed daily by a GitHub Actions workflow — see the repository for the schedule. Gray bands mark NBER-designated recessions. Fed data typically lags by a release cycle; market data is end-of-day.
   </footer>
 </div>
 
 <script>
 const CATEGORIES = ["All","Growth & business cycle","Labor market","Consumer health","Housing","Inflation","Monetary policy & rates","Credit conditions","Markets & risk sentiment","Trade & global","Commodities & energy","Demographics & structural","Private markets signals"];
 const RANGES = [{k:"1Y",days:365},{k:"5Y",days:365*5},{k:"10Y",days:365*10},{k:"Max",days:999999}];
-const TICKER_IDS = ["^spx","DGS10","DCOILWTICO","UNRATE"];
+const TICKER_IDS = ["^GSPC","DGS10","DCOILWTICO","UNRATE"];
 const SERIES_COLOR_A = "#7E1D2B";
 const SERIES_COLOR_B = "#3B5166";
 
@@ -320,7 +320,7 @@ function renderCompareOptions(){
   document.getElementById("compareA").innerHTML = opts;
   document.getElementById("compareB").innerHTML = opts;
   document.getElementById("compareA").value = "UNRATE" in DATA.series ? "UNRATE" : Object.keys(DATA.series)[0];
-  document.getElementById("compareB").value = "^spx" in DATA.series ? "^spx" : Object.keys(DATA.series)[1];
+  document.getElementById("compareB").value = "^GSPC" in DATA.series ? "^GSPC" : Object.keys(DATA.series)[1];
   document.getElementById("compareA").addEventListener("change", renderCompare);
   document.getElementById("compareB").addEventListener("change", renderCompare);
 }

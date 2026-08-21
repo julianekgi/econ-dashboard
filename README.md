@@ -1,7 +1,7 @@
 # Knight Group Economic Data Pack
 
 A self-updating economic dashboard. A scheduled GitHub Actions workflow pulls
-~100 series from FRED and Stooq daily, computes a handful of derived series
+~100 series from FRED and Yahoo Finance daily, computes a handful of derived series
 (credit spreads, a small-cap/large-cap ratio, M2 growth), and writes a
 rules-based narrative summary. GitHub Pages serves an interactive dashboard
 reading that data — recession-shaded charts, an indexed compare tool, a YoY
@@ -42,7 +42,7 @@ Add one line to the `SERIES` list in `fetch_data.py`:
 dict(id="XXXXX", name="Display name", cat="Category name", src="fred", fmt="index"),
 ```
 
-`src` is `"fred"` (id = FRED series ID) or `"stooq"` (id = Stooq ticker).
+`src` is `"fred"` (id = FRED series ID) or `"yahoo"` (id = Yahoo Finance ticker).
 `cat` must match one of the six section names already used, or it becomes a
 new section automatically. Push the change — the next scheduled run (or a
 manual "Run workflow") picks it up.
@@ -59,7 +59,7 @@ manual "Run workflow") picks it up.
 ## Notes
 
 - FRED data lags by its normal release cycle (daily/weekly/monthly per
-  series); market data from Stooq is end-of-day.
+  series); market data from Yahoo Finance is end-of-day.
 - Gray bands on charts mark NBER-designated recessions, pulled from FRED's
   own `USREC` indicator.
 - If a series shows "unavailable," check the Actions run log — it prints
