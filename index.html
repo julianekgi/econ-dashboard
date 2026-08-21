@@ -90,6 +90,13 @@
   .house-view .section-title{border:none; margin-bottom:6px; padding-bottom:0;}
   .house-view-pending{font-size:12.5px; color:var(--ink-mute); font-style:italic;}
 
+  .headlines{border:1px solid var(--line); border-radius:6px; background:var(--card);}
+  .headline-item{padding:12px 16px; border-bottom:1px solid var(--line-soft); display:flex; justify-content:space-between; align-items:baseline; gap:16px;}
+  .headline-item:last-child{border-bottom:none;}
+  .headline-title{font-size:13.5px; color:var(--ink); text-decoration:none; flex:1;}
+  .headline-title:hover{color:var(--burgundy); text-decoration:underline;}
+  .headline-meta{font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--ink-mute); white-space:nowrap; flex-shrink:0;}
+
   @media (max-width:760px){ .ticker{grid-template-columns:repeat(2,1fr);} .ticker-item:nth-child(2n){border-right:none;} }
 </style>
 </head>
@@ -119,7 +126,7 @@
     <div class="ranges" id="ranges"></div>
   </div>
 
-  <div class="compare">
+  <div class="compare" id="compareWrap">
     <div class="section-title" style="border:none; margin-bottom:8px;">Compare (indexed to 100)</div>
     <div class="compare-controls">
       <label style="font-size:12px; color:var(--ink-soft);">Series A</label>
@@ -131,7 +138,7 @@
     <div class="compare-chart" id="compareChart"></div>
   </div>
 
-  <div class="section">
+  <div class="section" id="yoyWrap">
     <div class="section-title">Year-over-year change</div>
     <table class="yoy" id="yoyTable"></table>
   </div>
@@ -145,6 +152,7 @@
 
 <script>
 const CATEGORIES = ["All","Growth & business cycle","Labor market","Consumer health","Housing","Inflation","Monetary policy & rates","Credit conditions","Markets & risk sentiment","Trade & global","Commodities & energy","Demographics & structural","Private markets signals","Freight & trucking"];
+const NEWS_TAB = "Finance News";
 const RANGES = [{k:"1Y",days:365},{k:"5Y",days:365*5},{k:"10Y",days:365*10},{k:"Max",days:999999}];
 const TICKER_IDS = ["^GSPC","DGS10","DCOILWTICO","UNRATE"];
 const SERIES_COLOR_A = "#7E1D2B";
@@ -279,7 +287,8 @@ function cardHtml(id){
 }
 
 function renderTabs(){
-  document.getElementById("tabs").innerHTML = CATEGORIES.map(c=>
+  const cats = CATEGORIES.concat([NEWS_TAB]);
+  document.getElementById("tabs").innerHTML = cats.map(c=>
     `<button class="tab ${c===state.cat?'active':''}" onclick="setCat('${c.replace(/'/g,"\\'")}')">${c}</button>`).join("");
 }
 function renderRanges(){
@@ -306,7 +315,36 @@ function renderScoreboard(){
     </div>`).join("");
 }
 
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+function renderHeadlines(){
+  const items = DATA.headlines || [];
+  const el = document.getElementById("sections");
+  document.getElementById("compareWrap").style.display = "none";
+  document.getElementById("yoyWrap").style.display = "none";
+  if(!items.length){
+    el.innerHTML = `<div class="section"><div class="section-title">${NEWS_TAB}</div>
+      <div style="padding:20px 0; color:var(--ink-mute); font-size:12.5px;">No headlines available right now.</div></div>`;
+    return;
+  }
+  // Headlines come from third-party RSS feeds -- unlike the rest of this page's
+  // content, escape before inserting into innerHTML.
+  const rows = items.map(h => {
+    const when = h.published ? new Date(h.published).toLocaleString(undefined, {month:"short", day:"numeric", hour:"numeric", minute:"2-digit"}) : "";
+    return `<div class="headline-item">
+        <a class="headline-title" href="${escapeHtml(h.link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(h.title)}</a>
+        <div class="headline-meta">${escapeHtml(h.source)}${when ? " · "+when : ""}</div>
+      </div>`;
+  }).join("");
+  el.innerHTML = `<div class="section"><div class="section-title">${NEWS_TAB}</div><div class="headlines">${rows}</div></div>`;
+}
+
 function renderSections(){
+  if(state.cat === NEWS_TAB){ renderHeadlines(); return; }
+  document.getElementById("compareWrap").style.display = "";
+  document.getElementById("yoyWrap").style.display = "";
   const cats = state.cat==="All" ? CATEGORIES.slice(1) : [state.cat];
   const el = document.getElementById("sections");
   const chapterText = (DATA.narrative && DATA.narrative.chapters) || {};

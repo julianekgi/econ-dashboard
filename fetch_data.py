@@ -15,7 +15,9 @@ import csv
 import io
 import json
 import time
+import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
+from email.utils import parsedate_to_datetime
 from urllib.parse import quote
 
 import requests
@@ -247,6 +249,49 @@ def fetch_yahoo(symbol):
         date = datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%d")
         out.append([date, float(close)])
     return out
+
+
+HEADLINE_FEEDS = [
+    ("CNBC", "https://www.cnbc.com/id/20910258/device/rss/rss.html"),
+    ("Yahoo Finance", "https://finance.yahoo.com/news/rssindex"),
+]
+
+
+def _parse_pubdate(raw):
+    if not raw:
+        return None
+    try:
+        return parsedate_to_datetime(raw)
+    except (TypeError, ValueError):
+        pass
+    try:
+        return datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def fetch_headlines():
+    items = []
+    for source, url in HEADLINE_FEEDS:
+        try:
+            resp = requests.get(url, headers=HEADERS, timeout=15)
+            resp.raise_for_status()
+            root = ET.fromstring(resp.content)
+            for item in root.findall(".//item")[:15]:
+                title = (item.findtext("title") or "").strip()
+                link = (item.findtext("link") or "").strip()
+                if not title or not link:
+                    continue
+                dt = _parse_pubdate((item.findtext("pubDate") or "").strip())
+                items.append({
+                    "title": title, "link": link, "source": source,
+                    "published": dt.astimezone(timezone.utc).isoformat() if dt else None,
+                })
+            print(f"[ok] Headlines from {source}: {len(items)} so far", flush=True)
+        except Exception as e:
+            print(f"[FAILED] Headlines from {source}: {e}", flush=True)
+    items.sort(key=lambda x: x["published"] or "", reverse=True)
+    return items[:20]
 
 
 # ---------------------------------------------------------------------------
@@ -509,6 +554,7 @@ def main():
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "series": {},
         "recession_periods": [],
+        "headlines": [],
         "narrative": {},
     }
 
@@ -548,6 +594,13 @@ def main():
         print(f"[ok] Recession periods: {len(periods)}")
     except Exception as e:
         print(f"[FAILED] Recession indicator: {e}")
+
+    try:
+        output["headlines"] = fetch_headlines()
+        print(f"[ok] Headlines: {len(output['headlines'])}")
+    except Exception as e:
+        output["headlines"] = []
+        print(f"[FAILED] Headlines: {e}")
 
     try:
         build_narrative(output)
