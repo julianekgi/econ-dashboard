@@ -122,7 +122,7 @@
 </div>
 
 <script>
-const CATEGORIES = ["All","Growth & business cycle","Labor market","Consumer health","Housing","Inflation","Monetary policy & rates","Credit conditions","Markets & risk sentiment","Trade & global","Commodities & energy","Demographics & structural","Private markets signals"];
+const CATEGORIES = ["All","Growth & business cycle","Labor market","Consumer health","Housing","Inflation","Monetary policy & rates","Credit conditions","Markets & risk sentiment","Trade & global","Commodities & energy","Demographics & structural","Private markets signals","Freight & trucking"];
 const RANGES = [{k:"1Y",days:365},{k:"5Y",days:365*5},{k:"10Y",days:365*10},{k:"Max",days:999999}];
 const TICKER_IDS = ["^GSPC","DGS10","DCOILWTICO","UNRATE"];
 const SERIES_COLOR_A = "#7E1D2B";
@@ -312,7 +312,7 @@ function renderTicker(){
     return `<div class="ticker-item"><div class="ticker-label">${s.name}</div>
       <div class="ticker-value">${fmtValue(last.value, s.format)}</div>
       <div class="ticker-change ${up?'up':'down'}">${up?'+':''}${change.toFixed(2)}%</div></div>`;
-  }).join("") + `<div class="ticker-item"><div class="ticker-label">Coverage</div><div class="ticker-value">${Object.keys(DATA.series).length} series</div><div class="ticker-change">6 sections</div></div>`;
+  }).join("") + `<div class="ticker-item"><div class="ticker-label">Coverage</div><div class="ticker-value">${Object.keys(DATA.series).length} series</div><div class="ticker-change">${CATEGORIES.length-1} sections</div></div>`;
 }
 
 function renderCompareOptions(){

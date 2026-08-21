@@ -47,6 +47,14 @@ SERIES = [
     dict(id="USPHCI",      name="Coincident economic index",            cat="Growth & business cycle", src="fred", fmt="index", dec=1),
     dict(id="CP",          name="Corporate profits",                    cat="Growth & business cycle", src="fred", fmt="usd", unit="B", dec=0),
     dict(id="RECPROUSM156N", name="Recession probability model",        cat="Growth & business cycle", src="fred", fmt="pct", dec=1),
+    dict(id="SAHMREALTIME", name="Sahm Rule recession indicator",       cat="Growth & business cycle", src="fred", fmt="pct", dec=2),
+    dict(id="JHDUSRGDPBR", name="GDP-based recession indicator",        cat="Growth & business cycle", src="fred", fmt="number", dec=0),
+    dict(id="CFNAI",       name="Chicago Fed national activity index", cat="Growth & business cycle", src="fred", fmt="number", dec=2),
+    dict(id="W875RX1",     name="Real personal income (ex. transfers)", cat="Growth & business cycle", src="fred", fmt="usd", unit="B", dec=0),
+    dict(id="TOTALSA",     name="Total vehicle sales",                  cat="Growth & business cycle", src="fred", fmt="number", unit="M", dec=1),
+    dict(id="AWHMAN",      name="Average weekly hours (manufacturing)", cat="Growth & business cycle", src="fred", fmt="number", unit=" hrs", dec=1),
+    dict(id="GACDFSA066MSFRBPHI", name="Philly Fed manufacturing index", cat="Growth & business cycle", src="fred", fmt="number", dec=1),
+    dict(id="GACDISA066MSFRBNY", name="NY Fed Empire State manufacturing index", cat="Growth & business cycle", src="fred", fmt="number", dec=1),
 
     # ---- Labor market: is hiring holding up or cracking? ----
     dict(id="UNRATE",      name="Unemployment rate",                    cat="Labor market", src="fred", fmt="pct", dec=1),
@@ -59,15 +67,23 @@ SERIES = [
     dict(id="CES0500000003", name="Average hourly earnings",           cat="Labor market", src="fred", fmt="usd", dec=2),
     dict(id="U6RATE",      name="Underemployment rate (U-6)",          cat="Labor market", src="fred", fmt="pct", dec=1),
     dict(id="EMRATIO",     name="Employment-to-population ratio",      cat="Labor market", src="fred", fmt="pct", dec=1),
+    dict(id="JTSLDR",      name="Layoffs & discharges rate (JOLTS)",   cat="Labor market", src="fred", fmt="pct", dec=1),
+    dict(id="JTSHIR",      name="Hires rate (JOLTS)",                  cat="Labor market", src="fred", fmt="pct", dec=1),
+    dict(id="TEMPHELPS",   name="Temporary help services employment",  cat="Labor market", src="fred", fmt="number", unit="K", dec=0),
+    dict(id="IURSA",       name="Insured unemployment rate",           cat="Labor market", src="fred", fmt="pct", dec=1),
+    dict(id="UEMPMEAN",    name="Average duration of unemployment",    cat="Labor market", src="fred", fmt="number", unit=" wks", dec=1),
 
     # ---- Consumer health: is the household sector still spending? ----
     dict(id="RSAFS",       name="Retail sales",                        cat="Consumer health", src="fred", fmt="usd", unit="M", dec=0),
     dict(id="PI",          name="Personal income",                     cat="Consumer health", src="fred", fmt="usd", unit="B", dec=0),
     dict(id="PCE",         name="Personal consumption expenditures",   cat="Consumer health", src="fred", fmt="usd", unit="B", dec=0),
     dict(id="PSAVERT",     name="Personal savings rate",               cat="Consumer health", src="fred", fmt="pct", dec=1),
-    dict(id="TOTALSL",     name="Total consumer credit",               cat="Consumer health", src="fred", fmt="usd", unit="B", dec=0),
+    dict(id="TOTALSL",     name="Total consumer credit",               cat="Consumer health", src="fred", fmt="usd", scale=0.001, unit="B", dec=0),
     dict(id="DRCCLACBS",   name="Credit card delinquency rate",        cat="Consumer health", src="fred", fmt="pct", dec=2),
     dict(id="UMCSENT",     name="Consumer sentiment (UMich)",          cat="Consumer health", src="fred", fmt="index", dec=1),
+    dict(id="REVOLSL",     name="Revolving consumer credit",           cat="Consumer health", src="fred", fmt="usd", scale=0.001, unit="B", dec=0),
+    dict(id="DRCLACBS",    name="Consumer loan delinquency rate",      cat="Consumer health", src="fred", fmt="pct", dec=2),
+    dict(id="DRSFRMACBS",  name="Mortgage delinquency rate (single-family)", cat="Consumer health", src="fred", fmt="pct", dec=2),
 
     # ---- Housing: the most rate-sensitive part of the economy ----
     dict(id="HOUST",       name="Housing starts",                      cat="Housing", src="fred", fmt="number", unit="K", dec=0),
@@ -80,6 +96,7 @@ SERIES = [
     dict(id="MSPUS",       name="Median home sale price",               cat="Housing", src="fred", fmt="usd", dec=0),
     dict(id="MSACSR",      name="Months' supply of houses",            cat="Housing", src="fred", fmt="number", dec=1),
     dict(id="CUSR0000SAH1", name="Shelter / rent CPI",                 cat="Housing", src="fred", fmt="index", dec=1),
+    dict(id="CUSR0000SEHC", name="Owners' equivalent rent CPI",        cat="Housing", src="fred", fmt="index", dec=1),
 
     # ---- Inflation: is the price problem resolved? ----
     dict(id="CPIAUCSL",    name="CPI (all urban)",                     cat="Inflation", src="fred", fmt="index", dec=1),
@@ -91,6 +108,8 @@ SERIES = [
     dict(id="CORESTICKM159SFRBATL", name="Sticky-price CPI",           cat="Inflation", src="fred", fmt="pct", dec=1),
     dict(id="T5YIE",       name="5-year breakeven inflation",          cat="Inflation", src="fred", fmt="pct", dec=2),
     dict(id="T10YIE",      name="10-year breakeven inflation",         cat="Inflation", src="fred", fmt="pct", dec=2),
+    dict(id="MICH",        name="Consumer inflation expectations (UMich)", cat="Inflation", src="fred", fmt="pct", dec=1),
+    dict(id="EXPINF1YR",   name="1-year expected inflation (Cleveland Fed)", cat="Inflation", src="fred", fmt="pct", dec=2),
 
     # ---- Monetary policy & rates: what is the Fed doing, what does the curve say? ----
     dict(id="FEDFUNDS",    name="Fed funds rate",                      cat="Monetary policy & rates", src="fred", fmt="pct", dec=2),
@@ -105,6 +124,10 @@ SERIES = [
     dict(id="SOFR",        name="SOFR overnight rate",                 cat="Monetary policy & rates", src="fred", fmt="pct", dec=2),
     dict(id="DTWEXBGS",    name="US dollar index (broad)",             cat="Monetary policy & rates", src="fred", fmt="index", dec=2),
     dict(id="DEXUSEU",     name="USD / EUR",                           cat="Monetary policy & rates", src="fred", fmt="number", dec=4),
+    dict(id="DGS1",        name="1-year treasury yield",               cat="Monetary policy & rates", src="fred", fmt="pct", dec=2),
+    dict(id="DGS30",       name="30-year treasury yield",              cat="Monetary policy & rates", src="fred", fmt="pct", dec=2),
+    dict(id="M1SL",        name="M1 money supply",                     cat="Monetary policy & rates", src="fred", fmt="usd", unit="B", dec=0),
+    dict(id="M2V",         name="M2 velocity",                         cat="Monetary policy & rates", src="fred", fmt="number", dec=2),
 
     # ---- Credit conditions: is financing getting harder to find? ----
     dict(id="BAMLH0A0HYM2", name="High-yield credit spread",          cat="Credit conditions", src="fred", fmt="pct", dec=2),
@@ -115,6 +138,7 @@ SERIES = [
     dict(id="BUSLOANS",    name="Commercial & industrial loans outstanding", cat="Credit conditions", src="fred", fmt="usd", unit="B", dec=0),
     dict(id="STLFSI4",     name="St. Louis Fed financial stress index", cat="Credit conditions", src="fred", fmt="index", dec=2),
     dict(id="NFCI",        name="Chicago Fed financial conditions index", cat="Credit conditions", src="fred", fmt="index", dec=2),
+    dict(id="DRTSCLCC",    name="Bank lending standards (credit cards, net % tightening)", cat="Credit conditions", src="fred", fmt="number", dec=1),
 
     # ---- Markets & risk sentiment ----
     dict(id="^GSPC",       name="S&P 500",                             cat="Markets & risk sentiment", src="yahoo", fmt="number", dec=2),
@@ -145,6 +169,10 @@ SERIES = [
     dict(id="DHHNGSP",     name="Natural gas (Henry Hub)",             cat="Commodities & energy", src="fred", fmt="usd", unit="/MMBtu", dec=2),
     dict(id="PCOPPUSDM",   name="Copper",                               cat="Commodities & energy", src="fred", fmt="usd", unit="/mt", dec=0),
     dict(id="PL=F",        name="Platinum",                             cat="Commodities & energy", src="yahoo", fmt="usd", unit="/oz", dec=2),
+    dict(id="LBR=F",       name="Lumber",                               cat="Commodities & energy", src="yahoo", fmt="usd", unit="/1000 bd ft", dec=2),
+    dict(id="ZC=F",        name="Corn",                                 cat="Commodities & energy", src="yahoo", fmt="usd", scale=0.01, unit="/bu", dec=2),
+    dict(id="ZW=F",        name="Wheat",                                cat="Commodities & energy", src="yahoo", fmt="usd", scale=0.01, unit="/bu", dec=2),
+    dict(id="ZS=F",        name="Soybeans",                             cat="Commodities & energy", src="yahoo", fmt="usd", scale=0.01, unit="/bu", dec=2),
 
     # ---- Demographics & structural ----
     dict(id="POPTHM",      name="US population",                       cat="Demographics & structural", src="fred", fmt="number", scale=0.001, unit="M", dec=1),
@@ -154,6 +182,15 @@ SERIES = [
 
     # ---- Private-markets-adjacent proxies (no direct PE/VC data is public) ----
     dict(id="IPO",         name="IPO market proxy (Renaissance IPO ETF)", cat="Private markets signals", src="yahoo", fmt="usd", dec=2),
+
+    # ---- Freight & trucking: KNX-relevant demand and cost indicators ----
+    dict(id="TRUCKD11",    name="ATA truck tonnage index",             cat="Freight & trucking", src="fred", fmt="index", dec=1),
+    dict(id="TSIFRGHT",    name="Freight transportation services index", cat="Freight & trucking", src="fred", fmt="index", dec=1),
+    dict(id="FRGSHPUSM649NCIS", name="Cass freight shipments index",   cat="Freight & trucking", src="fred", fmt="index", dec=3),
+    dict(id="CES4348400001", name="Truck transportation employment",   cat="Freight & trucking", src="fred", fmt="number", unit="K", dec=1),
+    dict(id="PCU484121484121", name="Truckload freight pricing (PPI)", cat="Freight & trucking", src="fred", fmt="index", dec=1),
+    dict(id="GASDESW",     name="Diesel price",                        cat="Freight & trucking", src="fred", fmt="usd", unit="/gal", dec=3),
+    dict(id="ECOMSA",      name="E-commerce retail sales",             cat="Freight & trucking", src="fred", fmt="usd", unit="M", dec=0),
 ]
 
 # Derived series -- computed after the raw fetch, using simple math on one or two series
@@ -379,6 +416,16 @@ def build_narrative(output):
         if vix:
             parts.append(f"volatility is {'elevated' if vix['latest'] and vix['latest'] > 20 else 'subdued'} (VIX {vix['latest']:.1f})")
         chapters["Markets & risk sentiment"] = "Markets: " + "; ".join(parts) + "."
+
+    tonnage = trend(output, "TRUCKD11", 6, 2.0)
+    diesel = trend(output, "GASDESW", 6, 5.0)
+    if tonnage or diesel:
+        parts = []
+        if tonnage:
+            parts.append(f"truck tonnage is {tonnage['direction']}")
+        if diesel:
+            parts.append(f"diesel prices are {diesel['direction']} (${diesel['latest']:.2f}/gal)")
+        chapters["Freight & trucking"] = "Freight: " + "; ".join(parts) + "."
 
     # Headline synthesis -- simple, transparent rules. Not a forecast.
     inflation_elevated = cpi is not None and cpi.get("direction") == "rising"

@@ -1,7 +1,7 @@
 # Knight Group Economic Data Pack
 
 A self-updating economic dashboard. A scheduled GitHub Actions workflow pulls
-~100 series from FRED and Yahoo Finance daily, computes a handful of derived series
+~130 series from FRED and Yahoo Finance daily, computes a handful of derived series
 (credit spreads, a small-cap/large-cap ratio, M2 growth), and writes a
 rules-based narrative summary. GitHub Pages serves an interactive dashboard
 reading that data — recession-shaded charts, an indexed compare tool, a YoY
