@@ -45,7 +45,7 @@ SERIES = [
     dict(id="DGORDER",     name="Durable goods new orders",             cat="Growth & business cycle", src="fred", fmt="usd", unit="M", dec=0),
     dict(id="NEWORDER",    name="Core capital goods orders",            cat="Growth & business cycle", src="fred", fmt="usd", unit="M", dec=0),
     dict(id="BUSINV",      name="Business inventories",                  cat="Growth & business cycle", src="fred", fmt="usd", unit="M", dec=0),
-    dict(id="USSLIND",     name="Leading economic index",               cat="Growth & business cycle", src="fred", fmt="index", dec=2),
+    dict(id="USALOLITOAASTSAM", name="Leading economic index (OECD)",   cat="Growth & business cycle", src="fred", fmt="index", dec=2),
     dict(id="USPHCI",      name="Coincident economic index",            cat="Growth & business cycle", src="fred", fmt="index", dec=1),
     dict(id="CP",          name="Corporate profits",                    cat="Growth & business cycle", src="fred", fmt="usd", unit="B", dec=0),
     dict(id="RECPROUSM156N", name="Recession probability model",        cat="Growth & business cycle", src="fred", fmt="pct", dec=1),
@@ -395,7 +395,7 @@ def build_narrative(output):
         chapters["Labor market"] = "Labor market: " + "; ".join(parts) + "."
 
     indpro = trend(output, "INDPRO", 6, 1.0)
-    lei = trend(output, "USSLIND", 6, 0.5)
+    lei = trend(output, "USALOLITOAASTSAM", 6, 0.5)
     if indpro or lei:
         parts = []
         if indpro:
