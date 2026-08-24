@@ -425,7 +425,7 @@ function renderGroups(){
 }
 function setGroup(g){
   state.group = g;
-  if(state.cat !== NEWS_TAB) state.cat = "All";
+  state.cat = "All"; // selecting a group always means "show me indicators", not headlines
   clearSearchBox();
   renderGroups(); renderTabs(); renderSections(); renderYoY();
 }
@@ -449,7 +449,7 @@ function renderDensityToggle(){
     `<button class="range-btn ${state.density===m.k?'active':''}" onclick="setDensity('${m.k}')">${m.label}</button>`).join("");
 }
 function setDensity(d){ state.density = d; renderDensityToggle(); renderSections(); }
-function setCat(c){ state.cat=c; clearSearchBox(); renderTabs(); renderSections(); renderYoY(); }
+function setCat(c){ state.cat=c; clearSearchBox(); renderGroups(); renderTabs(); renderSections(); renderYoY(); }
 function setRange(r){ state.range=r; renderRanges(); renderSections(); renderCompare(); }
 function clearSearchBox(){ const b = document.getElementById("searchBox"); if(b) b.value = ""; }
 
