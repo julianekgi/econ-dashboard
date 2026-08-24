@@ -21,7 +21,10 @@
   .masthead .sub{font-size:12.5px; color:var(--ink-soft); margin-top:4px; font-family:'IBM Plex Mono', monospace;}
   .masthead-right{text-align:right; font-family:'IBM Plex Mono', monospace; font-size:11.5px; color:var(--ink-mute);}
 
-  .ticker{display:grid; grid-template-columns:repeat(5,1fr); gap:0; margin-bottom:28px; border:1px solid var(--line);}
+  @keyframes pulse{0%,100%{opacity:1;} 50%{opacity:0.35;}}
+  .loading-shimmer{animation:pulse 1.4s ease-in-out infinite;}
+
+  .ticker{display:grid; grid-template-columns:repeat(5,1fr); gap:0; margin-bottom:20px; border:1px solid var(--line);}
   .ticker-item{padding:12px 16px; border-right:1px solid var(--line);}
   .ticker-item:last-child{border-right:none;}
   .ticker-label{font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-mute); margin-bottom:4px;}
@@ -29,13 +32,22 @@
   .ticker-change{font-family:'IBM Plex Mono', monospace; font-size:11.5px; margin-top:2px;}
   .ticker-change.up{color:var(--up);} .ticker-change.down{color:var(--down);}
 
+  .groups-row{display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:12px; flex-wrap:wrap;}
+  .groups{display:flex; gap:6px; flex-wrap:wrap;}
+  .group-btn{font-family:'IBM Plex Mono', monospace; font-size:11.5px; padding:5px 12px; border:1px solid var(--line); border-radius:14px; background:none; color:var(--ink-soft); cursor:pointer; text-transform:uppercase; letter-spacing:0.03em;}
+  .group-btn.active{background:var(--burgundy); color:#fff; border-color:var(--burgundy);}
+  .group-btn:hover:not(.active){border-color:var(--ink-mute);}
+  .search-box{font-family:'IBM Plex Mono',monospace; font-size:12px; padding:7px 12px; border:1px solid var(--line); border-radius:14px; background:#fff; color:var(--ink); min-width:220px;}
+  .search-box:focus{outline:none; border-color:var(--burgundy);}
+
   .controls{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; margin-bottom:22px;}
+  .controls-right{display:flex; gap:14px; align-items:center; flex-wrap:wrap;}
   .tabs{display:flex; gap:6px; flex-wrap:wrap;}
   .tab, .range-btn{font-family:'IBM Plex Mono', monospace; font-size:12px; padding:6px 12px; border:1px solid var(--line); border-radius:3px; background:none; color:var(--ink-soft); cursor:pointer;}
   .tab.active{background:var(--ink); color:#fff; border-color:var(--ink);}
   .range-btn.active{background:var(--burgundy); color:#fff; border-color:var(--burgundy);}
   .tab:hover:not(.active), .range-btn:hover:not(.active){border-color:var(--ink-mute);}
-  .ranges{display:flex; gap:6px;}
+  .ranges, .density{display:flex; gap:6px;}
 
   .section{margin-bottom:34px;}
   .section-title{font-family:'Source Serif 4', serif; font-size:15px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin:0 0 12px; padding-bottom:6px; border-bottom:1px solid var(--line-soft);}
@@ -43,8 +55,9 @@
 
   .card{border:1px solid var(--line); border-radius:6px; background:var(--card); padding:14px 16px 8px; position:relative;}
   .card-top{display:flex; justify-content:space-between; align-items:flex-start;}
-  .card-name{font-size:13px; font-weight:500;}
+  .card-name{font-size:13px; font-weight:500; display:inline;}
   .card-meta{font-size:10.5px; color:var(--ink-mute); font-family:'IBM Plex Mono', monospace; margin-top:2px;}
+  .card-top-right{display:flex; align-items:flex-start; gap:6px;}
   .card-stats{text-align:right;}
   .card-value{font-family:'IBM Plex Mono', monospace; font-size:16px; font-weight:500;}
   .card-change{font-family:'IBM Plex Mono', monospace; font-size:11px;}
@@ -53,21 +66,28 @@
   .chart-box svg{width:100%; height:100%; display:block; overflow:visible;}
   .tooltip{position:absolute; pointer-events:none; background:var(--ink); color:#fff; font-family:'IBM Plex Mono',monospace; font-size:10.5px; padding:3px 7px; border-radius:3px; transform:translate(-50%,-130%); white-space:nowrap; opacity:0; transition:opacity 0.1s;}
 
+  .pin-btn{background:none; border:none; cursor:pointer; font-size:15px; line-height:1; color:var(--ink-mute); padding:2px; flex-shrink:0;}
+  .pin-btn.pinned{color:var(--warn);}
+  .pin-btn:hover{color:var(--burgundy);}
+
+  .badge-signal{font-family:'IBM Plex Mono',monospace; font-size:8.5px; font-weight:500; letter-spacing:0.04em; color:var(--burgundy); border:1px solid var(--burgundy); border-radius:3px; padding:1px 4px; margin-left:6px; vertical-align:middle; white-space:nowrap;}
+
   /* Compare panel */
   .compare{border:1px solid var(--line); border-radius:6px; padding:16px 18px; margin-bottom:34px; background:var(--card);}
   .compare-controls{display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:12px;}
-  .compare-controls select{font-family:'IBM Plex Mono',monospace; font-size:12px; padding:6px 8px; border:1px solid var(--line); border-radius:3px; background:#fff; color:var(--ink);}
+  .compare-controls select{font-family:'IBM Plex Mono',monospace; font-size:12px; padding:6px 8px; border:1px solid var(--line); border-radius:3px; background:#fff; color:var(--ink); max-width:100%;}
   .compare-legend{display:flex; gap:16px; font-size:12px; margin-bottom:6px;}
   .compare-legend span{display:inline-flex; align-items:center; gap:5px;}
   .swatch{width:10px; height:10px; border-radius:2px; display:inline-block;}
   .compare-chart{height:220px;}
 
-  /* YoY table */
+  /* YoY / compact tables */
   table.yoy{width:100%; border-collapse:collapse; font-size:12.5px;}
   table.yoy th{text-align:left; font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-mute); padding:6px 10px; border-bottom:1px solid var(--ink);}
   table.yoy td{padding:6px 10px; border-bottom:1px solid var(--line-soft); font-family:'IBM Plex Mono',monospace;}
   table.yoy td.name{font-family:'IBM Plex Sans',sans-serif;}
   table.yoy tr:hover{background:var(--line-soft);}
+  table.compact-table td:last-child{width:1%; text-align:right;}
 
   footer{margin-top:36px; padding-top:16px; border-top:1px solid var(--line); font-size:11.5px; color:var(--ink-mute); line-height:1.6;}
 
@@ -76,8 +96,9 @@
   .narrative-disclaimer{font-size:11px; color:var(--ink-soft); font-style:italic;}
   .chapter-narrative{font-size:12.5px; color:var(--ink-soft); margin:0 0 12px; padding:8px 12px; background:var(--line-soft); border-left:2px solid var(--burgundy); border-radius:0 4px 4px 0;}
 
-  .scoreboard{display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:10px; margin-bottom:26px;}
-  .signal{border:1px solid var(--line); border-left:4px solid var(--ink-mute); border-radius:4px; padding:10px 12px; background:var(--card);}
+  .scoreboard{display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:10px; margin-bottom:20px;}
+  .signal{border:1px solid var(--line); border-left:4px solid var(--ink-mute); border-radius:4px; padding:10px 12px; background:var(--card); cursor:pointer; transition:box-shadow 0.1s, border-color 0.1s;}
+  .signal:hover{border-color:var(--ink-mute); box-shadow:0 1px 5px rgba(27,26,24,0.08);}
   .signal.green{border-left-color:var(--up);} .signal.yellow{border-left-color:var(--warn);}
   .signal.red{border-left-color:var(--down);} .signal.gray{border-left-color:var(--ink-mute);}
   .signal-label{font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-mute); display:flex; justify-content:space-between; align-items:center;}
@@ -86,9 +107,9 @@
   .signal-dot.red{background:var(--down);} .signal-dot.gray{background:var(--ink-mute);}
   .signal-detail{font-size:12.5px; color:var(--ink-soft); margin-top:5px; line-height:1.4;}
 
-  .house-view{border:1px dashed var(--line); border-radius:6px; padding:16px 18px; margin-bottom:26px; background:var(--line-soft);}
-  .house-view .section-title{border:none; margin-bottom:6px; padding-bottom:0;}
-  .house-view-pending{font-size:12.5px; color:var(--ink-mute); font-style:italic;}
+  .house-view{border:1px dashed var(--line); border-radius:6px; padding:8px 16px; margin-bottom:20px; background:var(--line-soft); display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;}
+  .house-view-title{font-family:'Source Serif 4', serif; font-size:12.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; white-space:nowrap;}
+  .house-view-pending{font-size:12px; color:var(--ink-mute); font-style:italic;}
 
   .headlines{border:1px solid var(--line); border-radius:6px; background:var(--card);}
   .headline-item{padding:12px 16px; border-bottom:1px solid var(--line-soft); display:flex; justify-content:space-between; align-items:baseline; gap:16px;}
@@ -97,7 +118,17 @@
   .headline-title:hover{color:var(--burgundy); text-decoration:underline;}
   .headline-meta{font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--ink-mute); white-space:nowrap; flex-shrink:0;}
 
-  @media (max-width:760px){ .ticker{grid-template-columns:repeat(2,1fr);} .ticker-item:nth-child(2n){border-right:none;} }
+  @media (max-width:760px){
+    .wrap{padding:20px 14px 40px;}
+    .ticker{grid-template-columns:repeat(2,1fr);} .ticker-item:nth-child(2n){border-right:none;}
+    .masthead{flex-direction:column; align-items:flex-start;}
+    .masthead-right{text-align:left;}
+    .controls{flex-direction:column; align-items:stretch;}
+    .groups-row{flex-direction:column; align-items:stretch;}
+    .search-box{width:100%;}
+    .compare-controls{flex-direction:column; align-items:stretch;}
+    .compare-controls select{width:100%;}
+  }
 </style>
 </head>
 <body>
@@ -107,23 +138,33 @@
       <h1>Knight Group — Economic Data Pack</h1>
       <div class="sub">Auto-refreshed daily via GitHub Actions</div>
     </div>
-    <div class="masthead-right" id="asof">Loading…</div>
+    <div class="masthead-right loading-shimmer" id="asof">Loading economic data…</div>
   </div>
 
   <div class="narrative-banner" id="narrativeBanner"></div>
 
   <div class="scoreboard" id="scoreboard"></div>
 
+  <div id="pinned"></div>
+
   <div class="house-view">
-    <div class="section-title">House View</div>
+    <div class="house-view-title">House View</div>
     <div class="house-view-pending">Pending — parameters being determined.</div>
   </div>
 
   <div class="ticker" id="ticker"></div>
 
+  <div class="groups-row">
+    <div class="groups" id="groups"></div>
+    <input type="text" id="searchBox" class="search-box" placeholder="Search indicators…" autocomplete="off">
+  </div>
+
   <div class="controls">
     <div class="tabs" id="tabs"></div>
-    <div class="ranges" id="ranges"></div>
+    <div class="controls-right">
+      <div class="ranges" id="ranges"></div>
+      <div class="density" id="densityToggle"></div>
+    </div>
   </div>
 
   <div class="compare" id="compareWrap">
@@ -158,8 +199,35 @@ const TICKER_IDS = ["^GSPC","DGS10","DCOILWTICO","UNRATE"];
 const SERIES_COLOR_A = "#7E1D2B";
 const SERIES_COLOR_B = "#3B5166";
 
+// First-level nav groups -- narrows the second-level category tabs so 13
+// categories don't have to sit in one flat, wrapping row.
+const GROUPS = {
+  "Economy": ["Growth & business cycle","Labor market","Consumer health","Housing","Inflation"],
+  "Policy & Credit": ["Monetary policy & rates","Credit conditions"],
+  "Markets": ["Markets & risk sentiment","Private markets signals"],
+  "Trade & Commodities": ["Trade & global","Commodities & energy","Freight & trucking"],
+  "Structural": ["Demographics & structural"],
+};
+const GROUP_NAMES = Object.keys(GROUPS);
+function categoriesForGroup(g){
+  if(g==="All" || !GROUPS[g]) return CATEGORIES.slice(1);
+  return GROUPS[g];
+}
+function groupOfCategory(cat){
+  for(const g of GROUP_NAMES){ if(GROUPS[g].includes(cat)) return g; }
+  return "All";
+}
+
+// Named/historically-attributed signals (Buffett Indicator, Sahm Rule, Dow
+// Theory, etc.) get a small badge so they stand out from plain data series.
+const NAMED_INDICATORS = new Set([
+  "SAHMREALTIME","JHDUSRGDPBR","RECPROUSM156N","CFNAI",
+  "BUFFETT_INDICATOR","DOW_THEORY_RATIO","COPPER_GOLD_RATIO",
+  "BEVERIDGE_RATIO","CONSUMER_DISC_STAPLES_RATIO","HOME_PRICE_RENT_RATIO",
+]);
+
 let DATA = null;
-let state = { cat:"All", range:"5Y" };
+let state = { cat:"All", range:"5Y", group:"All", density:"charts" };
 
 function fmtValue(v, fmt){
   if(v==null || isNaN(v)) return "—";
@@ -264,12 +332,42 @@ function attachHover(container, chartData, fmt){
   svgEl.addEventListener("mouseleave", ()=>{ tooltip.style.opacity = 0; });
 }
 
+// ---- Pinning (persisted client-side, no backend needed) ----
+function getPinned(){
+  try { return new Set(JSON.parse(localStorage.getItem("pinnedSeries")||"[]")); }
+  catch(e){ return new Set(); }
+}
+function setPinnedSet(set){
+  try { localStorage.setItem("pinnedSeries", JSON.stringify([...set])); } catch(e){}
+}
+function togglePin(id, ev){
+  if(ev) ev.stopPropagation();
+  const p = getPinned();
+  if(p.has(id)) p.delete(id); else p.add(id);
+  setPinnedSet(p);
+  renderPinned();
+  renderSections();
+}
+function pinBtnHtml(id){
+  const pinned = getPinned().has(id);
+  const safeId = id.replace(/'/g,"\\'");
+  return `<button class="pin-btn ${pinned?'pinned':''}" onclick="togglePin('${safeId}', event)" title="${pinned?'Unpin':'Pin to top'}">${pinned?'★':'☆'}</button>`;
+}
+
+function nameWithBadge(id, name){
+  return NAMED_INDICATORS.has(id) ? `${name}<span class="badge-signal">SIGNAL</span>` : name;
+}
+
 function cardHtml(id){
   const s = DATA.series[id];
   const points = parsePoints(s.points);
   const filtered = filterRange(points, state.range);
+  const pinBtn = pinBtnHtml(id);
   if(s.error || filtered.length < 2){
-    return `<div class="card"><div class="card-top"><div class="card-name">${s.name}</div></div>
+    return `<div class="card" data-id="${id}"><div class="card-top">
+      <div class="card-name">${nameWithBadge(id, s.name)}</div>
+      <div class="card-top-right">${pinBtn}</div>
+    </div>
       <div style="text-align:center; padding:20px 0; font-size:11.5px; color:var(--ink-mute);">unavailable</div></div>`;
   }
   const last = filtered[filtered.length-1], first = filtered[0];
@@ -278,16 +376,66 @@ function cardHtml(id){
   const chart = buildChartSVG(filtered, {color: up ? "#2E6B45" : "#A32D2D"});
   return `<div class="card" data-id="${id}">
     <div class="card-top">
-      <div><div class="card-name">${s.name}</div><div class="card-meta">${s.source.toUpperCase()} · ${id}</div></div>
-      <div class="card-stats"><div class="card-value">${fmtValue(last.value, s.format)}</div>
-        <div class="card-change ${up?'up':'down'}">${change===null ? '—' : (up?'+':'')+change.toFixed(1)+'% ('+state.range+')'}</div></div>
+      <div><div class="card-name">${nameWithBadge(id, s.name)}</div><div class="card-meta">${s.source.toUpperCase()} · ${id}</div></div>
+      <div class="card-top-right">
+        ${pinBtn}
+        <div class="card-stats"><div class="card-value">${fmtValue(last.value, s.format)}</div>
+          <div class="card-change ${up?'up':'down'}">${change===null ? '—' : (up?'+':'')+change.toFixed(1)+'% ('+state.range+')'}</div></div>
+      </div>
     </div>
     <div class="chart-box">${chart.svg}<div class="tooltip"></div></div>
   </div>`;
 }
 
+function compactRowHtml(id){
+  const s = DATA.series[id];
+  const points = parsePoints(s.points);
+  const filtered = filterRange(points, state.range);
+  const pinBtn = pinBtnHtml(id);
+  if(s.error || filtered.length < 2){
+    return `<tr><td class="name">${nameWithBadge(id, s.name)}</td><td>—</td><td>—</td><td>${pinBtn}</td></tr>`;
+  }
+  const last = filtered[filtered.length-1], first = filtered[0];
+  const change = first.value === 0 ? null : ((last.value-first.value)/first.value)*100;
+  const up = change === null || change >= 0;
+  return `<tr><td class="name">${nameWithBadge(id, s.name)}</td>
+    <td>${fmtValue(last.value, s.format)}</td>
+    <td style="color:${change===null?'var(--ink-mute)':(up?'var(--up)':'var(--down)')}">${change===null?'—':(up?'+':'')+change.toFixed(1)+'%'}</td>
+    <td>${pinBtn}</td></tr>`;
+}
+
+function attachChartsFor(ids){
+  ids.forEach(id=>{
+    const s = DATA.series[id];
+    if(!s || s.error) return;
+    const points = filterRange(parsePoints(s.points), state.range);
+    if(points.length<2) return;
+    const container = document.querySelector(`.card[data-id="${id}"] .chart-box`);
+    if(!container) return;
+    const up = points[points.length-1].value >= points[0].value;
+    const chart = buildChartSVG(points, {color: up?"#2E6B45":"#A32D2D"});
+    attachHover(container, chart, s.format);
+  });
+}
+
+function renderGroups(){
+  const groupList = ["All"].concat(GROUP_NAMES);
+  document.getElementById("groups").innerHTML = groupList.map(g=>
+    `<button class="group-btn ${g===state.group?'active':''}" onclick="setGroup('${g.replace(/'/g,"\\'")}')">${g}</button>`).join("");
+}
+function setGroup(g){
+  state.group = g;
+  if(state.cat !== NEWS_TAB) state.cat = "All";
+  clearSearchBox();
+  renderGroups(); renderTabs(); renderSections(); renderYoY();
+}
+function jumpToCategory(cat){
+  state.group = groupOfCategory(cat);
+  setCat(cat);
+}
+
 function renderTabs(){
-  const cats = CATEGORIES.concat([NEWS_TAB]);
+  const cats = ["All"].concat(categoriesForGroup(state.group), [NEWS_TAB]);
   document.getElementById("tabs").innerHTML = cats.map(c=>
     `<button class="tab ${c===state.cat?'active':''}" onclick="setCat('${c.replace(/'/g,"\\'")}')">${c}</button>`).join("");
 }
@@ -295,8 +443,15 @@ function renderRanges(){
   document.getElementById("ranges").innerHTML = RANGES.map(r=>
     `<button class="range-btn ${r.k===state.range?'active':''}" onclick="setRange('${r.k}')">${r.k}</button>`).join("");
 }
-function setCat(c){ state.cat=c; renderTabs(); renderSections(); renderYoY(); }
+function renderDensityToggle(){
+  const modes = [{k:"charts",label:"Charts"},{k:"compact",label:"Compact"}];
+  document.getElementById("densityToggle").innerHTML = modes.map(m=>
+    `<button class="range-btn ${state.density===m.k?'active':''}" onclick="setDensity('${m.k}')">${m.label}</button>`).join("");
+}
+function setDensity(d){ state.density = d; renderDensityToggle(); renderSections(); }
+function setCat(c){ state.cat=c; clearSearchBox(); renderTabs(); renderSections(); renderYoY(); }
 function setRange(r){ state.range=r; renderRanges(); renderSections(); renderCompare(); }
+function clearSearchBox(){ const b = document.getElementById("searchBox"); if(b) b.value = ""; }
 
 function renderNarrative(){
   const n = DATA.narrative;
@@ -309,10 +464,19 @@ function renderScoreboard(){
   const el = document.getElementById("scoreboard");
   const sb = (DATA.narrative && DATA.narrative.scoreboard) || [];
   if(!sb.length){ el.style.display = "none"; return; }
-  el.innerHTML = sb.map(s => `<div class="signal ${s.status}">
+  el.innerHTML = sb.map(s => `<div class="signal ${s.status}" onclick="jumpToCategory('${s.cat.replace(/'/g,"\\'")}')" role="button" tabindex="0">
       <div class="signal-label">${s.label}<span class="signal-dot ${s.status}"></span></div>
       <div class="signal-detail">${s.detail}</div>
     </div>`).join("");
+}
+
+function renderPinned(){
+  const el = document.getElementById("pinned");
+  const pinned = [...getPinned()].filter(id => DATA.series[id]);
+  if(!pinned.length){ el.style.display = "none"; el.innerHTML = ""; return; }
+  el.style.display = "";
+  el.innerHTML = `<div class="section"><div class="section-title">Pinned</div><div class="grid">${pinned.map(cardHtml).join("")}</div></div>`;
+  attachChartsFor(pinned);
 }
 
 function escapeHtml(s){
@@ -341,31 +505,50 @@ function renderHeadlines(){
   el.innerHTML = `<div class="section"><div class="section-title">${NEWS_TAB}</div><div class="headlines">${rows}</div></div>`;
 }
 
+function renderSearch(term){
+  term = term.trim().toLowerCase();
+  if(!term){ renderSections(); return; }
+  const el = document.getElementById("sections");
+  document.getElementById("compareWrap").style.display = "none";
+  document.getElementById("yoyWrap").style.display = "none";
+  const ids = Object.keys(DATA.series).filter(id =>
+    DATA.series[id].name.toLowerCase().includes(term) || id.toLowerCase().includes(term));
+  if(!ids.length){
+    el.innerHTML = `<div class="section"><div class="section-title">Search results</div>
+      <div style="padding:20px 0; color:var(--ink-mute); font-size:12.5px;">No indicators match "${escapeHtml(term)}".</div></div>`;
+    return;
+  }
+  el.innerHTML = `<div class="section"><div class="section-title">Search results (${ids.length})</div><div class="grid">${ids.map(cardHtml).join("")}</div></div>`;
+  attachChartsFor(ids);
+}
+
 function renderSections(){
   if(state.cat === NEWS_TAB){ renderHeadlines(); return; }
   document.getElementById("compareWrap").style.display = "";
   document.getElementById("yoyWrap").style.display = "";
-  const cats = state.cat==="All" ? CATEGORIES.slice(1) : [state.cat];
+  const cats = state.cat==="All" ? categoriesForGroup(state.group) : [state.cat];
   const el = document.getElementById("sections");
   const chapterText = (DATA.narrative && DATA.narrative.chapters) || {};
+  const allIds = [];
+
+  if(state.density === "compact"){
+    el.innerHTML = cats.map(cat=>{
+      const ids = Object.keys(DATA.series).filter(id=>DATA.series[id].category===cat);
+      allIds.push(...ids);
+      const blurb = chapterText[cat] ? `<div class="chapter-narrative">${chapterText[cat]}</div>` : "";
+      return `<div class="section"><div class="section-title">${cat}</div>${blurb}
+        <table class="yoy compact-table"><tr><th>Series</th><th>Latest</th><th>Change (${state.range})</th><th></th></tr>${ids.map(compactRowHtml).join("")}</table></div>`;
+    }).join("");
+    return; // no charts to attach in compact mode
+  }
+
   el.innerHTML = cats.map(cat=>{
     const ids = Object.keys(DATA.series).filter(id=>DATA.series[id].category===cat);
+    allIds.push(...ids);
     const blurb = chapterText[cat] ? `<div class="chapter-narrative">${chapterText[cat]}</div>` : "";
     return `<div class="section"><div class="section-title">${cat}</div>${blurb}<div class="grid">${ids.map(cardHtml).join("")}</div></div>`;
   }).join("");
-  cats.forEach(cat=>{
-    Object.keys(DATA.series).filter(id=>DATA.series[id].category===cat).forEach(id=>{
-      const s = DATA.series[id];
-      if(s.error) return;
-      const points = filterRange(parsePoints(s.points), state.range);
-      if(points.length<2) return;
-      const container = document.querySelector(`.card[data-id="${id}"] .chart-box`);
-      if(!container) return;
-      const up = points[points.length-1].value >= points[0].value;
-      const chart = buildChartSVG(points, {color: up?"#2E6B45":"#A32D2D"});
-      attachHover(container, chart, s.format);
-    });
-  });
+  attachChartsFor(allIds);
 }
 
 function renderTicker(){
@@ -386,7 +569,14 @@ function renderTicker(){
 }
 
 function renderCompareOptions(){
-  const opts = Object.keys(DATA.series).map(id=>`<option value="${id}">${DATA.series[id].name}</option>`).join("");
+  const byCat = {};
+  Object.keys(DATA.series).forEach(id=>{
+    const cat = DATA.series[id].category;
+    (byCat[cat] = byCat[cat] || []).push(id);
+  });
+  const opts = Object.keys(byCat).map(cat=>
+    `<optgroup label="${cat}">${byCat[cat].map(id=>`<option value="${id}">${DATA.series[id].name}</option>`).join("")}</optgroup>`
+  ).join("");
   document.getElementById("compareA").innerHTML = opts;
   document.getElementById("compareB").innerHTML = opts;
   document.getElementById("compareA").value = "UNRATE" in DATA.series ? "UNRATE" : Object.keys(DATA.series)[0];
@@ -455,8 +645,8 @@ function yoyChange(points){
 }
 
 function renderYoY(){
-  const rows = Object.keys(DATA.series).filter(id=>
-      state.cat==="All" || DATA.series[id].category===state.cat).map(id=>{
+  const scopedCats = state.cat==="All" ? categoriesForGroup(state.group) : [state.cat];
+  const rows = Object.keys(DATA.series).filter(id=> scopedCats.includes(DATA.series[id].category)).map(id=>{
     const s = DATA.series[id];
     if(s.error) return null;
     const points = parsePoints(s.points);
@@ -475,11 +665,16 @@ function renderYoY(){
 async function init(){
   const res = await fetch('data/all_series.json');
   DATA = await res.json();
-  document.getElementById("asof").textContent = "Data as of " + new Date(DATA.generated_at).toLocaleString();
+  const asof = document.getElementById("asof");
+  asof.textContent = "Data as of " + new Date(DATA.generated_at).toLocaleString();
+  asof.classList.remove("loading-shimmer");
   renderNarrative();
   renderScoreboard();
-  renderTabs(); renderRanges(); renderTicker(); renderSections();
+  renderPinned();
+  renderGroups();
+  renderTabs(); renderRanges(); renderDensityToggle(); renderTicker(); renderSections();
   renderCompareOptions(); renderCompare(); renderYoY();
+  document.getElementById("searchBox").addEventListener("input", e => renderSearch(e.target.value));
 }
 init();
 </script>
