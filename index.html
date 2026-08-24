@@ -43,6 +43,10 @@
   .controls{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; margin-bottom:22px;}
   .controls-right{display:flex; gap:14px; align-items:center; flex-wrap:wrap;}
   .tabs{display:flex; gap:6px; flex-wrap:wrap;}
+  .jump-nav{display:flex; gap:6px; flex-wrap:wrap; position:sticky; top:0; z-index:5; background:var(--bg); padding:8px 0; margin-bottom:6px; border-bottom:1px solid var(--line-soft);}
+  .jump-nav:empty{display:none; border:none; padding:0;}
+  .jump-nav a{font-family:'IBM Plex Mono',monospace; font-size:11px; padding:4px 10px; border:1px solid var(--line); border-radius:12px; color:var(--ink-soft); text-decoration:none; text-transform:uppercase; letter-spacing:0.03em; white-space:nowrap;}
+  .jump-nav a:hover{border-color:var(--burgundy); color:var(--burgundy);}
   .tab, .range-btn{font-family:'IBM Plex Mono', monospace; font-size:12px; padding:6px 12px; border:1px solid var(--line); border-radius:3px; background:none; color:var(--ink-soft); cursor:pointer;}
   .tab.active{background:var(--ink); color:#fff; border-color:var(--ink);}
   .range-btn.active{background:var(--burgundy); color:#fff; border-color:var(--burgundy);}
@@ -75,7 +79,8 @@
   /* Compare panel */
   .compare{border:1px solid var(--line); border-radius:6px; padding:16px 18px; margin-bottom:34px; background:var(--card);}
   .compare-controls{display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:12px;}
-  .compare-controls select{font-family:'IBM Plex Mono',monospace; font-size:12px; padding:6px 8px; border:1px solid var(--line); border-radius:3px; background:#fff; color:var(--ink); max-width:100%;}
+  .compare-controls select,.compare-controls .compare-search{font-family:'IBM Plex Mono',monospace; font-size:12px; padding:6px 8px; border:1px solid var(--line); border-radius:3px; background:#fff; color:var(--ink); max-width:100%;}
+  .compare-controls .compare-search{width:260px;}
   .compare-legend{display:flex; gap:16px; font-size:12px; margin-bottom:6px;}
   .compare-legend span{display:inline-flex; align-items:center; gap:5px;}
   .swatch{width:10px; height:10px; border-radius:2px; display:inline-block;}
@@ -127,7 +132,7 @@
     .groups-row{flex-direction:column; align-items:stretch;}
     .search-box{width:100%;}
     .compare-controls{flex-direction:column; align-items:stretch;}
-    .compare-controls select{width:100%;}
+    .compare-controls select,.compare-controls .compare-search{width:100%;}
   }
 </style>
 </head>
@@ -171,9 +176,10 @@
     <div class="section-title" style="border:none; margin-bottom:8px;">Compare (indexed to 100)</div>
     <div class="compare-controls">
       <label style="font-size:12px; color:var(--ink-soft);">Series A</label>
-      <select id="compareA"></select>
+      <input type="text" id="compareASearch" class="compare-search" list="compareOptionsList" autocomplete="off" placeholder="Search series…">
       <label style="font-size:12px; color:var(--ink-soft);">Series B</label>
-      <select id="compareB"></select>
+      <input type="text" id="compareBSearch" class="compare-search" list="compareOptionsList" autocomplete="off" placeholder="Search series…">
+      <datalist id="compareOptionsList"></datalist>
     </div>
     <div class="compare-legend" id="compareLegend"></div>
     <div class="compare-chart" id="compareChart"></div>
@@ -184,6 +190,7 @@
     <table class="yoy" id="yoyTable"></table>
   </div>
 
+  <div class="jump-nav" id="jumpNav"></div>
   <div id="sections"></div>
 
   <footer>
@@ -486,6 +493,7 @@ function escapeHtml(s){
 function renderHeadlines(){
   const items = DATA.headlines || [];
   const el = document.getElementById("sections");
+  document.getElementById("jumpNav").innerHTML = "";
   document.getElementById("compareWrap").style.display = "none";
   document.getElementById("yoyWrap").style.display = "none";
   if(!items.length){
@@ -509,6 +517,7 @@ function renderSearch(term){
   term = term.trim().toLowerCase();
   if(!term){ renderSections(); return; }
   const el = document.getElementById("sections");
+  document.getElementById("jumpNav").innerHTML = "";
   document.getElementById("compareWrap").style.display = "none";
   document.getElementById("yoyWrap").style.display = "none";
   const ids = Object.keys(DATA.series).filter(id =>
@@ -522,6 +531,15 @@ function renderSearch(term){
   attachChartsFor(ids);
 }
 
+function catSlug(cat){ return "cat-" + cat.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,""); }
+
+function renderJumpNav(cats){
+  const nav = document.getElementById("jumpNav");
+  nav.innerHTML = cats.length > 1
+    ? cats.map(cat=>`<a href="#${catSlug(cat)}">${cat}</a>`).join("")
+    : "";
+}
+
 function renderSections(){
   if(state.cat === NEWS_TAB){ renderHeadlines(); return; }
   document.getElementById("compareWrap").style.display = "";
@@ -530,13 +548,14 @@ function renderSections(){
   const el = document.getElementById("sections");
   const chapterText = (DATA.narrative && DATA.narrative.chapters) || {};
   const allIds = [];
+  renderJumpNav(cats);
 
   if(state.density === "compact"){
     el.innerHTML = cats.map(cat=>{
       const ids = Object.keys(DATA.series).filter(id=>DATA.series[id].category===cat);
       allIds.push(...ids);
       const blurb = chapterText[cat] ? `<div class="chapter-narrative">${chapterText[cat]}</div>` : "";
-      return `<div class="section"><div class="section-title">${cat}</div>${blurb}
+      return `<div class="section" id="${catSlug(cat)}"><div class="section-title">${cat}</div>${blurb}
         <table class="yoy compact-table"><tr><th>Series</th><th>Latest</th><th>Change (${state.range})</th><th></th></tr>${ids.map(compactRowHtml).join("")}</table></div>`;
     }).join("");
     return; // no charts to attach in compact mode
@@ -546,7 +565,7 @@ function renderSections(){
     const ids = Object.keys(DATA.series).filter(id=>DATA.series[id].category===cat);
     allIds.push(...ids);
     const blurb = chapterText[cat] ? `<div class="chapter-narrative">${chapterText[cat]}</div>` : "";
-    return `<div class="section"><div class="section-title">${cat}</div>${blurb}<div class="grid">${ids.map(cardHtml).join("")}</div></div>`;
+    return `<div class="section" id="${catSlug(cat)}"><div class="section-title">${cat}</div>${blurb}<div class="grid">${ids.map(cardHtml).join("")}</div></div>`;
   }).join("");
   attachChartsFor(allIds);
 }
@@ -568,21 +587,36 @@ function renderTicker(){
   }).join("") + `<div class="ticker-item"><div class="ticker-label">Coverage</div><div class="ticker-value">${Object.keys(DATA.series).length} series</div><div class="ticker-change">${CATEGORIES.length-1} sections</div></div>`;
 }
 
+let COMPARE_LABEL_TO_ID = {};
+function compareLabel(id){
+  const s = DATA.series[id];
+  return `${s.name} — ${s.category}`;
+}
 function renderCompareOptions(){
-  const byCat = {};
-  Object.keys(DATA.series).forEach(id=>{
-    const cat = DATA.series[id].category;
-    (byCat[cat] = byCat[cat] || []).push(id);
-  });
-  const opts = Object.keys(byCat).map(cat=>
-    `<optgroup label="${cat}">${byCat[cat].map(id=>`<option value="${id}">${DATA.series[id].name}</option>`).join("")}</optgroup>`
-  ).join("");
-  document.getElementById("compareA").innerHTML = opts;
-  document.getElementById("compareB").innerHTML = opts;
-  document.getElementById("compareA").value = "UNRATE" in DATA.series ? "UNRATE" : Object.keys(DATA.series)[0];
-  document.getElementById("compareB").value = "^GSPC" in DATA.series ? "^GSPC" : Object.keys(DATA.series)[1];
-  document.getElementById("compareA").addEventListener("change", renderCompare);
-  document.getElementById("compareB").addEventListener("change", renderCompare);
+  const ids = Object.keys(DATA.series).sort((a,b)=>
+    DATA.series[a].category.localeCompare(DATA.series[b].category) ||
+    DATA.series[a].name.localeCompare(DATA.series[b].name));
+  COMPARE_LABEL_TO_ID = {};
+  document.getElementById("compareOptionsList").innerHTML = ids.map(id=>{
+    const label = compareLabel(id);
+    COMPARE_LABEL_TO_ID[label] = id;
+    return `<option value="${escapeHtml(label)}"></option>`;
+  }).join("");
+  setCompareSelection("compareASearch", "UNRATE" in DATA.series ? "UNRATE" : ids[0]);
+  setCompareSelection("compareBSearch", "^GSPC" in DATA.series ? "^GSPC" : ids[1]);
+  document.getElementById("compareASearch").addEventListener("change", onCompareSearchChange);
+  document.getElementById("compareBSearch").addEventListener("change", onCompareSearchChange);
+}
+function setCompareSelection(inputId, seriesId){
+  const el = document.getElementById(inputId);
+  el.value = compareLabel(seriesId);
+  el.dataset.seriesId = seriesId;
+}
+function onCompareSearchChange(ev){
+  const el = ev.target;
+  const id = COMPARE_LABEL_TO_ID[el.value];
+  if(id){ el.dataset.seriesId = id; renderCompare(); }
+  else { el.value = compareLabel(el.dataset.seriesId); }
 }
 
 function indexTo100(points){
@@ -592,8 +626,8 @@ function indexTo100(points){
 }
 
 function renderCompare(){
-  const idA = document.getElementById("compareA").value;
-  const idB = document.getElementById("compareB").value;
+  const idA = document.getElementById("compareASearch").dataset.seriesId;
+  const idB = document.getElementById("compareBSearch").dataset.seriesId;
   const sA = DATA.series[idA], sB = DATA.series[idB];
   const legend = document.getElementById("compareLegend");
   legend.innerHTML = `<span><span class="swatch" style="background:${SERIES_COLOR_A}"></span>${sA.name}</span>
