@@ -11,6 +11,7 @@ Local test run (optional):
     python fetch_data.py
 """
 
+import bisect
 import csv
 import io
 import json
@@ -39,6 +40,7 @@ HEADERS = {
 SERIES = [
     # ---- Growth & business cycle: is the economy expanding or slowing? ----
     dict(id="GDPC1",       name="Real GDP",                              cat="Growth & business cycle", src="fred", fmt="usd", unit="B", dec=0),
+    dict(id="GDP",         name="Nominal GDP",                          cat="Growth & business cycle", src="fred", fmt="usd", unit="B", dec=0),
     dict(id="A191RL1Q225SBEA", name="Real GDP growth rate (QoQ, annualized)", cat="Growth & business cycle", src="fred", fmt="pct", dec=1),
     dict(id="INDPRO",      name="Industrial production index",          cat="Growth & business cycle", src="fred", fmt="index", dec=1),
     dict(id="TCU",         name="Capacity utilization",                  cat="Growth & business cycle", src="fred", fmt="pct", dec=1),
@@ -74,6 +76,7 @@ SERIES = [
     dict(id="TEMPHELPS",   name="Temporary help services employment",  cat="Labor market", src="fred", fmt="number", unit="K", dec=0),
     dict(id="IURSA",       name="Insured unemployment rate",           cat="Labor market", src="fred", fmt="pct", dec=1),
     dict(id="UEMPMEAN",    name="Average duration of unemployment",    cat="Labor market", src="fred", fmt="number", unit=" wks", dec=1),
+    dict(id="UNEMPLOY",    name="Number of unemployed",                cat="Labor market", src="fred", fmt="number", unit="K", dec=0),
 
     # ---- Consumer health: is the household sector still spending? ----
     dict(id="RSAFS",       name="Retail sales",                        cat="Consumer health", src="fred", fmt="usd", unit="M", dec=0),
@@ -154,6 +157,10 @@ SERIES = [
     dict(id="ETH-USD",     name="Ethereum",                             cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
     dict(id="KNX",         name="KNX stock price",                     cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
     dict(id="VNQ",         name="REIT index proxy (Vanguard VNQ)",     cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
+    dict(id="^W5000",      name="Wilshire 5000 total market index",    cat="Markets & risk sentiment", src="yahoo", fmt="number", dec=2),
+    dict(id="^DJT",        name="Dow Jones Transportation Average",    cat="Markets & risk sentiment", src="yahoo", fmt="number", dec=2),
+    dict(id="XLY",         name="Consumer discretionary sector (XLY)", cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
+    dict(id="XLP",         name="Consumer staples sector (XLP)",       cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
 
     # ---- Trade & global ----
     dict(id="BOPGSTB",     name="Trade balance",                       cat="Trade & global", src="fred", fmt="usd", unit="M", dec=0),
@@ -193,6 +200,7 @@ SERIES = [
     dict(id="PCU484121484121", name="Truckload freight pricing (PPI)", cat="Freight & trucking", src="fred", fmt="index", dec=1),
     dict(id="GASDESW",     name="Diesel price",                        cat="Freight & trucking", src="fred", fmt="usd", unit="/gal", dec=3),
     dict(id="ECOMSA",      name="E-commerce retail sales",             cat="Freight & trucking", src="fred", fmt="usd", unit="M", dec=0),
+    dict(id="BDRY",        name="Baltic Dry Index proxy (ETF)",        cat="Freight & trucking", src="yahoo", fmt="usd", dec=2),
 ]
 
 # Derived series -- computed after the raw fetch, using simple math on one or two series
@@ -205,6 +213,20 @@ DERIVED = [
          cat="Private markets signals", a="^RUT", b="^GSPC", fmt="number", dec=2),
     dict(op="yoy_series", id="M2_YOY_GROWTH", name="M2 money supply growth (YoY)",
          cat="Private markets signals", a="M2SL", fmt="pct", dec=1),
+
+    # ---- Named/attributed recession signals ----
+    dict(op="divide100", id="BUFFETT_INDICATOR", name="Buffett Indicator (market cap / GDP)",
+         cat="Markets & risk sentiment", a="^W5000", b="GDP", fmt="pct", dec=1),
+    dict(op="divide100", id="DOW_THEORY_RATIO", name="Dow Theory ratio (Transports / Industrials)",
+         cat="Markets & risk sentiment", a="^DJT", b="^DJI", fmt="number", dec=2),
+    dict(op="divide100", id="COPPER_GOLD_RATIO", name="Copper/Gold ratio (\"Dr. Copper\")",
+         cat="Commodities & energy", a="PCOPPUSDM", b="GC=F", fmt="number", dec=2),
+    dict(op="divide", id="BEVERIDGE_RATIO", name="Job openings per unemployed (Beveridge ratio)",
+         cat="Labor market", a="JTSJOL", b="UNEMPLOY", fmt="number", dec=2),
+    dict(op="divide", id="CONSUMER_DISC_STAPLES_RATIO", name="Consumer discretionary / staples ratio",
+         cat="Markets & risk sentiment", a="XLY", b="XLP", fmt="number", dec=2),
+    dict(op="divide100", id="HOME_PRICE_RENT_RATIO", name="Home price-to-rent ratio (proxy)",
+         cat="Housing", a="CSUSHPISA", b="CUSR0000SAH1", fmt="number", dec=1),
 ]
 
 RECESSION_SERIES_ID = "USREC"
@@ -304,18 +326,28 @@ def _to_date(s):
 
 def compute_derived(output, d):
     try:
-        if d["op"] in ("subtract", "divide100"):
+        if d["op"] in ("subtract", "divide100", "divide"):
             a_entry = output["series"].get(d["a"])
             b_entry = output["series"].get(d["b"])
             if not a_entry or not b_entry or a_entry["error"] or b_entry["error"]:
                 raise ValueError("component series unavailable")
-            a_pts = {row[0]: row[1] for row in a_entry["points"]}
-            b_pts = {row[0]: row[1] for row in b_entry["points"]}
-            common = sorted(set(a_pts) & set(b_pts))
-            if d["op"] == "subtract":
-                pts = [[dt, round(a_pts[dt] - b_pts[dt], 4)] for dt in common]
-            else:  # divide100
-                pts = [[dt, round((a_pts[dt] / b_pts[dt]) * 100, 4)] for dt in common if b_pts[dt] != 0]
+            # Forward-fill b onto a's dates rather than requiring exact matches --
+            # needed when the two series update at different cadences (e.g. daily
+            # market data vs. quarterly GDP), and harmless when they match anyway.
+            a_pts = sorted(a_entry["points"])
+            b_sorted = sorted(b_entry["points"])
+            b_dates = [_to_date(r[0]) for r in b_sorted]
+            pts = []
+            for dt_str, a_val in a_pts:
+                idx = bisect.bisect_right(b_dates, _to_date(dt_str)) - 1
+                if idx < 0:
+                    continue
+                b_val = b_sorted[idx][1]
+                if d["op"] == "subtract":
+                    pts.append([dt_str, round(a_val - b_val, 4)])
+                elif b_val != 0:
+                    ratio = (a_val / b_val) * 100 if d["op"] == "divide100" else a_val / b_val
+                    pts.append([dt_str, round(ratio, 4)])
 
         elif d["op"] == "yoy_series":
             a_entry = output["series"].get(d["a"])
