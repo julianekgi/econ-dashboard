@@ -56,6 +56,23 @@ manual "Run workflow") picks it up.
 | `index.html` | The dashboard itself — reads `data/all_series.json` at load time |
 | `requirements.txt` | Python dependency for the Actions runner (`requests`) |
 
+## Backlog (not yet addable)
+
+Series worth adding once they're actually reachable — none fit the current
+FRED/Yahoo fetcher pattern today:
+
+- **S&P Pantera Digital Asset Index** — launched 2026-07-20; no public ticker
+  yet (not on Yahoo Finance, not on FRED), and no ETF tracks it yet either.
+  Re-check periodically — likely to surface on Yahoo once an ETF or index
+  fund tracking it launches.
+- **CFTC Commitment of Traders positioning** — publicly available via CFTC's
+  Socrata API (`publicreporting.cftc.gov`), but needs a new fetcher (not a
+  clean single CSV/JSON call like FRED/Yahoo) and a decision on which
+  contracts/fields to track.
+- **NY Fed Global Supply Chain Pressure Index** — not mirrored on FRED; only
+  published directly by the NY Fed, likely as an Excel file, which would mean
+  adding a new dependency (`openpyxl`) just for this one series.
+
 ## Notes
 
 - FRED data lags by its normal release cycle (daily/weekly/monthly per
