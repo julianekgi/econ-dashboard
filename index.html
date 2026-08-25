@@ -610,6 +610,14 @@ function renderCompareOptions(){
   setCompareSelection("compareBSearch", "^GSPC" in DATA.series ? "^GSPC" : ids[1]);
   document.getElementById("compareASearch").addEventListener("change", onCompareSearchChange);
   document.getElementById("compareBSearch").addEventListener("change", onCompareSearchChange);
+  // Select the existing text on focus -- otherwise typing inserts into the
+  // middle of the current label instead of replacing it, so the new text
+  // never matches an option and silently reverts. Deferred via setTimeout
+  // because a mouse click's own default caret placement runs after the
+  // focus event and would otherwise collapse this selection right back.
+  const selectOnFocus = ev => setTimeout(() => ev.target.select(), 0);
+  document.getElementById("compareASearch").addEventListener("focus", selectOnFocus);
+  document.getElementById("compareBSearch").addEventListener("focus", selectOnFocus);
 }
 function setCompareSelection(inputId, seriesId){
   const el = document.getElementById(inputId);
