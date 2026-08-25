@@ -81,6 +81,12 @@
   .compare-controls{display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:12px;}
   .compare-controls select,.compare-controls .compare-search{font-family:'IBM Plex Mono',monospace; font-size:12px; padding:6px 8px; border:1px solid var(--line); border-radius:3px; background:#fff; color:var(--ink); max-width:100%;}
   .compare-controls .compare-search{width:260px;}
+  .compare-field{position:relative;}
+  .compare-dropdown{display:none; position:absolute; top:100%; left:0; z-index:20; margin-top:2px; width:320px; max-height:240px; overflow-y:auto; background:#fff; border:1px solid var(--line); border-radius:4px; box-shadow:0 4px 12px rgba(0,0,0,0.1);}
+  .compare-dropdown.open{display:block;}
+  .compare-dropdown-item{padding:6px 10px; font-size:12px; font-family:'IBM Plex Mono',monospace; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .compare-dropdown-item:hover, .compare-dropdown-item.active{background:var(--line-soft);}
+  .compare-dropdown-empty{padding:6px 10px; font-size:12px; color:var(--ink-mute);}
   .compare-legend{display:flex; gap:16px; font-size:12px; margin-bottom:6px;}
   .compare-legend span{display:inline-flex; align-items:center; gap:5px;}
   .swatch{width:10px; height:10px; border-radius:2px; display:inline-block;}
@@ -179,10 +185,15 @@
     <div class="section-title" style="border:none; margin-bottom:8px;">Compare (indexed to 100)</div>
     <div class="compare-controls">
       <label style="font-size:12px; color:var(--ink-soft);">Series A</label>
-      <input type="text" id="compareASearch" class="compare-search" list="compareOptionsList" autocomplete="off" placeholder="Search series…">
+      <div class="compare-field">
+        <input type="text" id="compareASearch" class="compare-search" autocomplete="off" placeholder="Search series…">
+        <div class="compare-dropdown" id="compareADropdown"></div>
+      </div>
       <label style="font-size:12px; color:var(--ink-soft);">Series B</label>
-      <input type="text" id="compareBSearch" class="compare-search" list="compareOptionsList" autocomplete="off" placeholder="Search series…">
-      <datalist id="compareOptionsList"></datalist>
+      <div class="compare-field">
+        <input type="text" id="compareBSearch" class="compare-search" autocomplete="off" placeholder="Search series…">
+        <div class="compare-dropdown" id="compareBDropdown"></div>
+      </div>
     </div>
     <div class="compare-legend" id="compareLegend"></div>
     <div class="compare-chart" id="compareChart"></div>
@@ -592,43 +603,110 @@ function renderTicker(){
 }
 
 let COMPARE_LABEL_TO_ID = {};
+let COMPARE_IDS_SORTED = [];
 function compareLabel(id){
   const s = DATA.series[id];
   return `${s.name} — ${s.category}`;
 }
 function renderCompareOptions(){
-  const ids = Object.keys(DATA.series).sort((a,b)=>
+  COMPARE_IDS_SORTED = Object.keys(DATA.series).sort((a,b)=>
     DATA.series[a].category.localeCompare(DATA.series[b].category) ||
     DATA.series[a].name.localeCompare(DATA.series[b].name));
   COMPARE_LABEL_TO_ID = {};
-  document.getElementById("compareOptionsList").innerHTML = ids.map(id=>{
-    const label = compareLabel(id);
-    COMPARE_LABEL_TO_ID[label] = id;
-    return `<option value="${escapeHtml(label)}"></option>`;
-  }).join("");
-  setCompareSelection("compareASearch", "UNRATE" in DATA.series ? "UNRATE" : ids[0]);
-  setCompareSelection("compareBSearch", "^GSPC" in DATA.series ? "^GSPC" : ids[1]);
-  document.getElementById("compareASearch").addEventListener("change", onCompareSearchChange);
-  document.getElementById("compareBSearch").addEventListener("change", onCompareSearchChange);
-  // Select the existing text on focus -- otherwise typing inserts into the
-  // middle of the current label instead of replacing it, so the new text
-  // never matches an option and silently reverts. Deferred via setTimeout
-  // because a mouse click's own default caret placement runs after the
-  // focus event and would otherwise collapse this selection right back.
-  const selectOnFocus = ev => setTimeout(() => ev.target.select(), 0);
-  document.getElementById("compareASearch").addEventListener("focus", selectOnFocus);
-  document.getElementById("compareBSearch").addEventListener("focus", selectOnFocus);
+  COMPARE_IDS_SORTED.forEach(id => { COMPARE_LABEL_TO_ID[compareLabel(id)] = id; });
+  setCompareSelection("compareASearch", "UNRATE" in DATA.series ? "UNRATE" : COMPARE_IDS_SORTED[0]);
+  setCompareSelection("compareBSearch", "^GSPC" in DATA.series ? "^GSPC" : COMPARE_IDS_SORTED[1]);
+  setupCompareCombobox("compareASearch", "compareADropdown");
+  setupCompareCombobox("compareBSearch", "compareBDropdown");
 }
 function setCompareSelection(inputId, seriesId){
   const el = document.getElementById(inputId);
   el.value = compareLabel(seriesId);
   el.dataset.seriesId = seriesId;
 }
-function onCompareSearchChange(ev){
-  const el = ev.target;
-  const id = COMPARE_LABEL_TO_ID[el.value];
-  if(id){ el.dataset.seriesId = id; renderCompare(); }
-  else { el.value = compareLabel(el.dataset.seriesId); }
+// Custom dropdown instead of a native <datalist> -- datalist's browser-drawn
+// popup isn't reliably visible/clickable across browsers, which made it look
+// like series such as Trade balance or KNX couldn't be selected at all.
+function setupCompareCombobox(inputId, dropdownId){
+  const input = document.getElementById(inputId);
+  const dropdown = document.getElementById(dropdownId);
+  let activeIndex = -1;
+
+  function closeDropdown(){
+    dropdown.classList.remove("open");
+    dropdown.innerHTML = "";
+    activeIndex = -1;
+  }
+  function setActive(i){
+    const items = [...dropdown.children];
+    activeIndex = i;
+    items.forEach((el,idx)=>el.classList.toggle("active", idx===activeIndex));
+    if(items[activeIndex]) items[activeIndex].scrollIntoView({block:"nearest"});
+  }
+  function selectLabel(label){
+    const id = COMPARE_LABEL_TO_ID[label];
+    if(!id) return;
+    input.value = label;
+    input.dataset.seriesId = id;
+    closeDropdown();
+    renderCompare();
+  }
+  function matchesFor(term){
+    const t = term.trim().toLowerCase();
+    const pool = t ? COMPARE_IDS_SORTED.filter(id=>compareLabel(id).toLowerCase().includes(t)) : COMPARE_IDS_SORTED;
+    return pool.slice(0, 40).map(compareLabel);
+  }
+  function openDropdown(matches){
+    if(!matches.length){
+      dropdown.innerHTML = `<div class="compare-dropdown-empty">no matching series</div>`;
+      dropdown.classList.add("open");
+      activeIndex = -1;
+      return;
+    }
+    dropdown.innerHTML = matches.map(label=>
+      `<div class="compare-dropdown-item">${escapeHtml(label)}</div>`).join("");
+    dropdown.classList.add("open");
+    activeIndex = -1;
+    [...dropdown.children].forEach(el=>{
+      el.addEventListener("mousedown", ev=>{
+        ev.preventDefault(); // keep focus on the input so blur doesn't race this selection
+        selectLabel(el.textContent);
+      });
+    });
+  }
+  input.addEventListener("focus", ()=>{
+    setTimeout(()=>{
+      input.select();
+      openDropdown(matchesFor(""));
+    }, 0);
+  });
+  input.addEventListener("input", ()=> openDropdown(matchesFor(input.value)));
+  input.addEventListener("keydown", ev=>{
+    const items = [...dropdown.children].filter(el=>el.classList.contains("compare-dropdown-item"));
+    if(ev.key === "ArrowDown"){
+      ev.preventDefault();
+      if(items.length) setActive((activeIndex+1) % items.length);
+    } else if(ev.key === "ArrowUp"){
+      ev.preventDefault();
+      if(items.length) setActive((activeIndex-1+items.length) % items.length);
+    } else if(ev.key === "Enter"){
+      ev.preventDefault();
+      if(activeIndex>=0 && items[activeIndex]) selectLabel(items[activeIndex].textContent);
+      else if(items.length===1) selectLabel(items[0].textContent);
+    } else if(ev.key === "Escape"){
+      input.value = compareLabel(input.dataset.seriesId);
+      closeDropdown();
+      input.blur();
+    }
+  });
+  input.addEventListener("blur", ()=>{
+    // Deferred so a dropdown item's mousedown handler (which keeps focus via
+    // preventDefault) still runs and updates the value before this checks it.
+    setTimeout(()=>{
+      if(!(input.value in COMPARE_LABEL_TO_ID)) input.value = compareLabel(input.dataset.seriesId);
+      closeDropdown();
+    }, 120);
+  });
 }
 
 function indexTo100(points){
