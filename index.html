@@ -202,7 +202,7 @@
 </div>
 
 <script>
-const CATEGORIES = ["All","Growth & business cycle","Labor market","Consumer health","Housing","Inflation","Monetary policy & rates","Credit conditions","Markets & risk sentiment","Trade & global","Commodities & energy","Demographics & structural","Private markets signals","Freight & trucking"];
+const CATEGORIES = ["All","Growth & business cycle","Labor market","Consumer health","Housing","Inflation","Monetary policy & rates","Distress & credit access","Markets & risk sentiment","Trade & global","Commodities & energy","Demographics & structural","Private markets signals","Freight & trucking"];
 const NEWS_TAB = "Finance News";
 const RANGES = [{k:"1Y",days:365},{k:"5Y",days:365*5},{k:"10Y",days:365*10},{k:"Max",days:999999}];
 const TICKER_IDS = ["^GSPC","DGS10","DCOILWTICO","UNRATE"];
@@ -213,7 +213,7 @@ const SERIES_COLOR_B = "#3B5166";
 // categories don't have to sit in one flat, wrapping row.
 const GROUPS = {
   "Economy": ["Growth & business cycle","Labor market","Consumer health","Housing","Inflation"],
-  "Policy & Credit": ["Monetary policy & rates","Credit conditions"],
+  "Policy & Credit": ["Monetary policy & rates","Distress & credit access"],
   "Markets": ["Markets & risk sentiment","Private markets signals"],
   "Trade & Commodities": ["Trade & global","Commodities & energy","Freight & trucking"],
   "Structural": ["Demographics & structural"],
