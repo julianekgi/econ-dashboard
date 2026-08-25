@@ -95,6 +95,7 @@ SERIES = [
     dict(id="DRCLACBS",    name="Consumer loan delinquency rate",      cat="Consumer health", src="fred", fmt="pct", dec=2),
     dict(id="DRSFRMACBS",  name="Mortgage delinquency rate (single-family)", cat="Consumer health", src="fred", fmt="pct", dec=2),
     dict(id="BOGZ1FL192090005Q", name="Household net worth",           cat="Consumer health", src="fred", fmt="usd", unit="M", dec=0),
+    dict(id="TDSP",        name="Household debt service ratio",        cat="Consumer health", src="fred", fmt="pct", dec=1),
 
     # ---- Housing: the most rate-sensitive part of the economy ----
     dict(id="HOUST",       name="Housing starts",                      cat="Housing", src="fred", fmt="number", unit="K", dec=0),
@@ -138,6 +139,8 @@ SERIES = [
     dict(id="DGS30",       name="30-year treasury yield",              cat="Monetary policy & rates", src="fred", fmt="pct", dec=2),
     dict(id="M1SL",        name="M1 money supply",                     cat="Monetary policy & rates", src="fred", fmt="usd", unit="B", dec=0),
     dict(id="M2V",         name="M2 velocity",                         cat="Monetary policy & rates", src="fred", fmt="number", dec=2),
+    dict(id="THREEFYTP10", name="10-year term premium",                cat="Monetary policy & rates", src="fred", fmt="pct", dec=2),
+    dict(id="WRESBAL",     name="Bank reserve balances",               cat="Monetary policy & rates", src="fred", fmt="usd", unit="M", dec=0),
 
     # ---- Distress & credit access: is financing getting harder to find? ----
     dict(id="BAMLH0A0HYM2", name="High-yield credit spread",          cat="Distress & credit access", src="fred", fmt="pct", dec=2),
@@ -160,6 +163,7 @@ SERIES = [
     dict(id="^IXIC",       name="Nasdaq Composite",                    cat="Markets & risk sentiment", src="yahoo", fmt="number", dec=2),
     dict(id="^RUT",        name="Russell 2000",                        cat="Markets & risk sentiment", src="yahoo", fmt="number", dec=2),
     dict(id="VIXCLS",      name="VIX (volatility index)",              cat="Markets & risk sentiment", src="fred", fmt="index", dec=2),
+    dict(id="MMMFFAQ027S", name="Money market fund assets",            cat="Markets & risk sentiment", src="fred", fmt="usd", unit="M", dec=0),
     dict(id="GC=F",        name="Gold",                                 cat="Markets & risk sentiment", src="yahoo", fmt="usd", unit="/oz", dec=2),
     dict(id="SI=F",        name="Silver",                               cat="Markets & risk sentiment", src="yahoo", fmt="usd", unit="/oz", dec=2),
     dict(id="BTC-USD",     name="Bitcoin",                              cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=0),
@@ -239,6 +243,12 @@ DERIVED = [
          cat="Markets & risk sentiment", a="XLY", b="XLP", fmt="number", dec=2),
     dict(op="divide100", id="HOME_PRICE_RENT_RATIO", name="Home price-to-rent ratio (proxy)",
          cat="Housing", a="CSUSHPISA", b="CUSR0000SAH1", fmt="number", dec=1),
+    dict(op="divide100", id="REAL_RETAIL_SALES", name="Real retail sales (CPI-adjusted)",
+         cat="Consumer health", a="RSAFS", b="CPIAUCSL", fmt="number", dec=1),
+    dict(op="divide100", id="REAL_AVG_HOURLY_EARNINGS", name="Real average hourly earnings (CPI-adjusted)",
+         cat="Labor market", a="CES0500000003", b="CPIAUCSL", fmt="number", dec=2),
+    dict(op="divide", id="GOLD_SPX_RATIO", name="Gold / S&P 500 ratio",
+         cat="Markets & risk sentiment", a="GC=F", b="^GSPC", fmt="number", dec=3),
 ]
 
 RECESSION_SERIES_ID = "USREC"
