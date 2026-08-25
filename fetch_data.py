@@ -59,6 +59,8 @@ SERIES = [
     dict(id="AWHMAN",      name="Average weekly hours (manufacturing)", cat="Growth & business cycle", src="fred", fmt="number", unit=" hrs", dec=1),
     dict(id="GACDFSA066MSFRBPHI", name="Philly Fed manufacturing index", cat="Growth & business cycle", src="fred", fmt="number", dec=1),
     dict(id="GACDISA066MSFRBNY", name="NY Fed Empire State manufacturing index", cat="Growth & business cycle", src="fred", fmt="number", dec=1),
+    dict(id="USSLIND",     name="Leading index (St. Louis Fed model)",  cat="Growth & business cycle", src="fred", fmt="number", dec=2),
+    dict(id="ISRATIO",     name="Business inventories / sales ratio",  cat="Growth & business cycle", src="fred", fmt="number", dec=2),
 
     # ---- Labor market: is hiring holding up or cracking? ----
     dict(id="UNRATE",      name="Unemployment rate",                    cat="Labor market", src="fred", fmt="pct", dec=1),
@@ -77,6 +79,9 @@ SERIES = [
     dict(id="IURSA",       name="Insured unemployment rate",           cat="Labor market", src="fred", fmt="pct", dec=1),
     dict(id="UEMPMEAN",    name="Average duration of unemployment",    cat="Labor market", src="fred", fmt="number", unit=" wks", dec=1),
     dict(id="UNEMPLOY",    name="Number of unemployed",                cat="Labor market", src="fred", fmt="number", unit="K", dec=0),
+    dict(id="AWHI",        name="Aggregate weekly hours index (total private)", cat="Labor market", src="fred", fmt="index", dec=1),
+    dict(id="LNS12500000", name="Employed, usually full time",         cat="Labor market", src="fred", fmt="number", scale=0.001, unit="M", dec=1),
+    dict(id="LNS12032194", name="Part-time for economic reasons",      cat="Labor market", src="fred", fmt="number", unit="K", dec=0),
 
     # ---- Consumer health: is the household sector still spending? ----
     dict(id="RSAFS",       name="Retail sales",                        cat="Consumer health", src="fred", fmt="usd", unit="M", dec=0),
@@ -89,6 +94,7 @@ SERIES = [
     dict(id="REVOLSL",     name="Revolving consumer credit",           cat="Consumer health", src="fred", fmt="usd", scale=0.001, unit="B", dec=0),
     dict(id="DRCLACBS",    name="Consumer loan delinquency rate",      cat="Consumer health", src="fred", fmt="pct", dec=2),
     dict(id="DRSFRMACBS",  name="Mortgage delinquency rate (single-family)", cat="Consumer health", src="fred", fmt="pct", dec=2),
+    dict(id="BOGZ1FL192090005Q", name="Household net worth",           cat="Consumer health", src="fred", fmt="usd", unit="M", dec=0),
 
     # ---- Housing: the most rate-sensitive part of the economy ----
     dict(id="HOUST",       name="Housing starts",                      cat="Housing", src="fred", fmt="number", unit="K", dec=0),
@@ -204,6 +210,9 @@ SERIES = [
     dict(id="GASDESW",     name="Diesel price",                        cat="Freight & trucking", src="fred", fmt="usd", unit="/gal", dec=3),
     dict(id="ECOMSA",      name="E-commerce retail sales",             cat="Freight & trucking", src="fred", fmt="usd", unit="M", dec=0),
     dict(id="BDRY",        name="Baltic Dry Index proxy (ETF)",        cat="Freight & trucking", src="yahoo", fmt="usd", dec=2),
+    dict(id="PCU484122484122", name="LTL freight trucking pricing (PPI)", cat="Freight & trucking", src="fred", fmt="index", dec=1),
+    dict(id="RAILFRTCARLOADSD11", name="Rail freight carloads",        cat="Freight & trucking", src="fred", fmt="number", scale=0.000001, unit="M", dec=2),
+    dict(id="RAILFRTINTERMODAL", name="Rail freight intermodal traffic", cat="Freight & trucking", src="fred", fmt="number", scale=0.000001, unit="M", dec=2),
 ]
 
 # Derived series -- computed after the raw fetch, using simple math on one or two series
