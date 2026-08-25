@@ -109,6 +109,7 @@ SERIES = [
     dict(id="MSACSR",      name="Months' supply of houses",            cat="Housing", src="fred", fmt="number", dec=1),
     dict(id="CUSR0000SAH1", name="Shelter / rent CPI",                 cat="Housing", src="fred", fmt="index", dec=1),
     dict(id="CUSR0000SEHC", name="Owners' equivalent rent CPI",        cat="Housing", src="fred", fmt="index", dec=1),
+    dict(id="COMREPUSQ159N", name="Commercial real estate prices",     cat="Housing", src="fred", fmt="index", dec=1),
 
     # ---- Inflation: is the price problem resolved? ----
     dict(id="CPIAUCSL",    name="CPI (all urban)",                     cat="Inflation", src="fred", fmt="index", dec=1),
@@ -116,6 +117,7 @@ SERIES = [
     dict(id="PCEPI",       name="PCE price index",                     cat="Inflation", src="fred", fmt="index", dec=1),
     dict(id="PCEPILFE",    name="Core PCE (Fed's preferred gauge)",    cat="Inflation", src="fred", fmt="index", dec=1),
     dict(id="PPIACO",      name="Producer price index",                cat="Inflation", src="fred", fmt="index", dec=1),
+    dict(id="CPIMEDSL",    name="Medical care CPI",                    cat="Inflation", src="fred", fmt="index", dec=1),
     dict(id="IR",          name="Import price index",                  cat="Inflation", src="fred", fmt="index", dec=1),
     dict(id="CORESTICKM159SFRBATL", name="Sticky-price CPI",           cat="Inflation", src="fred", fmt="pct", dec=1),
     dict(id="T5YIE",       name="5-year breakeven inflation",          cat="Inflation", src="fred", fmt="pct", dec=2),
@@ -174,6 +176,18 @@ SERIES = [
     dict(id="^DJT",        name="Dow Jones Transportation Average",    cat="Markets & risk sentiment", src="yahoo", fmt="number", dec=2),
     dict(id="XLY",         name="Consumer discretionary sector (XLY)", cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
     dict(id="XLP",         name="Consumer staples sector (XLP)",       cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
+    dict(id="XLF",         name="Financials sector (XLF)",             cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
+    dict(id="XLE",         name="Energy sector (XLE)",                 cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
+    dict(id="XLI",         name="Industrials sector (XLI)",            cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
+    dict(id="XLK",         name="Technology sector (XLK)",             cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
+    dict(id="XLV",         name="Healthcare sector (XLV)",             cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
+    dict(id="XLU",         name="Utilities sector (XLU)",              cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
+    dict(id="XLB",         name="Materials sector (XLB)",              cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
+    dict(id="XLC",         name="Communication services sector (XLC)", cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
+    dict(id="XLRE",        name="Real estate sector (XLRE)",           cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
+    dict(id="SPY",         name="S&P 500 ETF (cap-weighted)",          cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
+    dict(id="RSP",         name="S&P 500 ETF (equal-weighted)",        cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
+    dict(id="^MOVE",       name="MOVE index (bond market volatility)", cat="Markets & risk sentiment", src="yahoo", fmt="index", dec=2),
 
     # ---- Trade & global ----
     dict(id="BOPGSTB",     name="Trade balance",                       cat="Trade & global", src="fred", fmt="usd", unit="M", dec=0),
@@ -249,6 +263,10 @@ DERIVED = [
          cat="Labor market", a="CES0500000003", b="CPIAUCSL", fmt="number", dec=2),
     dict(op="divide", id="GOLD_SPX_RATIO", name="Gold / S&P 500 ratio",
          cat="Markets & risk sentiment", a="GC=F", b="^GSPC", fmt="number", dec=3),
+    dict(op="divide", id="MARKET_BREADTH_RATIO", name="Equal-weight / cap-weight S&P ratio (breadth)",
+         cat="Markets & risk sentiment", a="RSP", b="SPY", fmt="number", dec=4),
+    dict(op="rolling_corr", id="STOCK_BOND_CORRELATION", name="Stock/bond return correlation (60-day)",
+         cat="Markets & risk sentiment", a="^GSPC", b="DGS10", window=60, fmt="number", dec=2),
 ]
 
 RECESSION_SERIES_ID = "USREC"
@@ -388,6 +406,46 @@ def compute_derived(output, d):
                 if best is not None and best_diff <= timedelta(days=45) and best != 0:
                     pts.append([date.strftime("%Y-%m-%d"), round(((val - best) / best) * 100, 3)])
             pts = pts[-260:]  # keep it bounded
+
+        elif d["op"] == "rolling_corr":
+            a_entry = output["series"].get(d["a"])
+            b_entry = output["series"].get(d["b"])
+            if not a_entry or not b_entry or a_entry["error"] or b_entry["error"]:
+                raise ValueError("component series unavailable")
+            # Forward-fill b onto a's dates (same approach as subtract/divide),
+            # then correlate day-over-day changes -- not raw levels, which would
+            # mostly just reflect both series trending over time.
+            a_pts = sorted(a_entry["points"])
+            b_sorted = sorted(b_entry["points"])
+            b_dates = [_to_date(r[0]) for r in b_sorted]
+            joined = []
+            for dt_str, a_val in a_pts:
+                idx = bisect.bisect_right(b_dates, _to_date(dt_str)) - 1
+                if idx < 0:
+                    continue
+                joined.append((dt_str, a_val, b_sorted[idx][1]))
+            changes = []
+            for i in range(1, len(joined)):
+                dt_str, a_val, b_val = joined[i]
+                _, a_prev, b_prev = joined[i - 1]
+                if a_prev == 0:
+                    continue
+                changes.append((dt_str, (a_val - a_prev) / abs(a_prev), b_val - b_prev))
+            window = d.get("window", 60)
+            pts = []
+            for i in range(window - 1, len(changes)):
+                win = changes[i - window + 1:i + 1]
+                xs = [c[1] for c in win]
+                ys = [c[2] for c in win]
+                n = len(xs)
+                mean_x, mean_y = sum(xs) / n, sum(ys) / n
+                cov = sum((x - mean_x) * (y - mean_y) for x, y in zip(xs, ys))
+                var_x = sum((x - mean_x) ** 2 for x in xs)
+                var_y = sum((y - mean_y) ** 2 for y in ys)
+                if var_x == 0 or var_y == 0:
+                    continue
+                pts.append([changes[i][0], round(cov / (var_x ** 0.5 * var_y ** 0.5), 4)])
+            pts = pts[-1250:]  # keep it bounded, ~5y of trading days
         else:
             raise ValueError(f"unknown op {d['op']}")
 
