@@ -123,7 +123,6 @@ SERIES = [
     dict(id="DGS3MO",      name="3-month treasury yield",              cat="Monetary policy & rates", src="fred", fmt="pct", dec=2),
     dict(id="T10Y2Y",      name="2s10s yield curve spread",            cat="Monetary policy & rates", src="fred", fmt="pct", dec=2),
     dict(id="T10Y3M",      name="10Y-3M yield curve spread",           cat="Monetary policy & rates", src="fred", fmt="pct", dec=2),
-    dict(id="DFII10",      name="Real 10-year yield (TIPS)",           cat="Monetary policy & rates", src="fred", fmt="pct", dec=2),
     dict(id="WALCL",       name="Fed balance sheet, total assets",     cat="Monetary policy & rates", src="fred", fmt="usd", unit="M", dec=0),
     dict(id="M2SL",        name="M2 money supply",                     cat="Monetary policy & rates", src="fred", fmt="usd", unit="B", dec=0),
     dict(id="SOFR",        name="SOFR overnight rate",                 cat="Monetary policy & rates", src="fred", fmt="pct", dec=2),
@@ -134,16 +133,20 @@ SERIES = [
     dict(id="M1SL",        name="M1 money supply",                     cat="Monetary policy & rates", src="fred", fmt="usd", unit="B", dec=0),
     dict(id="M2V",         name="M2 velocity",                         cat="Monetary policy & rates", src="fred", fmt="number", dec=2),
 
-    # ---- Credit conditions: is financing getting harder to find? ----
-    dict(id="BAMLH0A0HYM2", name="High-yield credit spread",          cat="Credit conditions", src="fred", fmt="pct", dec=2),
-    dict(id="BAMLC0A0CM",  name="Investment-grade credit spread",     cat="Credit conditions", src="fred", fmt="pct", dec=2),
-    dict(id="DAAA",        name="Moody's Aaa corporate yield",        cat="Credit conditions", src="fred", fmt="pct", dec=2),
-    dict(id="DBAA",        name="Moody's Baa corporate yield",        cat="Credit conditions", src="fred", fmt="pct", dec=2),
-    dict(id="DRTSCILM",    name="Bank lending standards (net % tightening)", cat="Credit conditions", src="fred", fmt="number", dec=1),
-    dict(id="BUSLOANS",    name="Commercial & industrial loans outstanding", cat="Credit conditions", src="fred", fmt="usd", unit="B", dec=0),
-    dict(id="STLFSI4",     name="St. Louis Fed financial stress index", cat="Credit conditions", src="fred", fmt="index", dec=2),
-    dict(id="NFCI",        name="Chicago Fed financial conditions index", cat="Credit conditions", src="fred", fmt="index", dec=2),
-    dict(id="DRTSCLCC",    name="Bank lending standards (credit cards, net % tightening)", cat="Credit conditions", src="fred", fmt="number", dec=1),
+    # ---- Distress & credit access: is financing getting harder to find? ----
+    dict(id="BAMLH0A0HYM2", name="High-yield credit spread",          cat="Distress & credit access", src="fred", fmt="pct", dec=2),
+    dict(id="BAMLC0A0CM",  name="Investment-grade credit spread",     cat="Distress & credit access", src="fred", fmt="pct", dec=2),
+    dict(id="DAAA",        name="Moody's Aaa corporate yield",        cat="Distress & credit access", src="fred", fmt="pct", dec=2),
+    dict(id="DBAA",        name="Moody's Baa corporate yield",        cat="Distress & credit access", src="fred", fmt="pct", dec=2),
+    dict(id="DRTSCILM",    name="Bank lending standards (net % tightening)", cat="Distress & credit access", src="fred", fmt="number", dec=1),
+    dict(id="BUSLOANS",    name="Commercial & industrial loans outstanding", cat="Distress & credit access", src="fred", fmt="usd", unit="B", dec=0),
+    dict(id="STLFSI4",     name="St. Louis Fed financial stress index", cat="Distress & credit access", src="fred", fmt="index", dec=2),
+    dict(id="NFCI",        name="Chicago Fed financial conditions index", cat="Distress & credit access", src="fred", fmt="index", dec=2),
+    dict(id="DRTSCLCC",    name="Bank lending standards (credit cards, net % tightening)", cat="Distress & credit access", src="fred", fmt="number", dec=1),
+    dict(id="DFII10",      name="Real 10-year yield (TIPS)",           cat="Distress & credit access", src="fred", fmt="pct", dec=2),
+    dict(id="DRTSCIS",     name="Bank lending standards, small firms (net % tightening)", cat="Distress & credit access", src="fred", fmt="number", dec=1),
+    dict(id="DRBLACBS",    name="Business loan delinquency rate",     cat="Distress & credit access", src="fred", fmt="pct", dec=2),
+    dict(id="CORBLACBS",   name="Business loan charge-off rate",      cat="Distress & credit access", src="fred", fmt="pct", dec=2),
 
     # ---- Markets & risk sentiment ----
     dict(id="^GSPC",       name="S&P 500",                             cat="Markets & risk sentiment", src="yahoo", fmt="number", dec=2),
@@ -206,7 +209,7 @@ SERIES = [
 # Derived series -- computed after the raw fetch, using simple math on one or two series
 DERIVED = [
     dict(op="subtract", id="BAA_AAA_SPREAD", name="Baa-Aaa corporate bond spread",
-         cat="Credit conditions", a="DBAA", b="DAAA", fmt="pct", dec=2),
+         cat="Distress & credit access", a="DBAA", b="DAAA", fmt="pct", dec=2),
     dict(op="subtract", id="BRENT_WTI_SPREAD", name="Brent-WTI oil spread",
          cat="Commodities & energy", a="DCOILBRENTEU", b="DCOILWTICO", fmt="usd", unit="/bbl", dec=2),
     dict(op="divide100", id="SMALLCAP_LARGECAP_RATIO", name="Small-cap / large-cap ratio (Russell 2000 vs S&P 500)",
@@ -478,11 +481,24 @@ def build_narrative(output):
         chapters["Monetary policy & rates"] = "Policy: " + "; ".join(parts) + "."
 
     hy = trend(output, "BAMLH0A0HYM2", 3, 5.0)
-    if hy:
-        chapters["Credit conditions"] = (
-            f"Credit: high-yield spreads are {hy['direction']} ({hy['latest']:.2f}%), "
-            f"{'a tightening signal' if hy['direction']=='rising' else 'suggesting easy financing conditions'}."
-        )
+    small_firm_standards = trend(output, "DRTSCIS", 6, 5.0)
+    if hy or small_firm_standards:
+        if (small_firm_standards and small_firm_standards["direction"] == "rising"
+                and hy and hy["direction"] in ("flat", "falling")):
+            chapters["Distress & credit access"] = (
+                f"Distress & credit access: small-firm bank lending standards are tightening "
+                f"({small_firm_standards['latest']:.1f}) while the high-yield spread is {hy['direction']} "
+                f"({hy['latest']:.2f}%) -- private and bank-financed companies may be feeling credit "
+                f"stress before public markets show it."
+            )
+        else:
+            parts = []
+            if small_firm_standards:
+                parts.append(f"small-firm bank lending standards are {small_firm_standards['direction']} "
+                             f"({small_firm_standards['latest']:.1f})")
+            if hy:
+                parts.append(f"the high-yield spread is {hy['direction']} ({hy['latest']:.2f}%)")
+            chapters["Distress & credit access"] = "Distress & credit access: " + "; ".join(parts) + "."
 
     vix = trend(output, "VIXCLS", 1, 10.0)
     spx = trend(output, "^GSPC", 6, 3.0)
@@ -541,7 +557,7 @@ def build_narrative(output):
         _signal("Housing", "Housing", _status(housing["direction"] if housing else None, "rising")),
         _signal("Inflation", "Inflation", _status(cpi["direction"] if cpi else None, "falling")),
         _signal("Monetary policy", "Monetary policy & rates", policy_status),
-        _signal("Credit conditions", "Credit conditions", _status(hy["direction"] if hy else None, "falling")),
+        _signal("Distress & credit access", "Distress & credit access", _status(hy["direction"] if hy else None, "falling")),
         _signal("Markets", "Markets & risk sentiment", markets_status),
         _signal("Freight & trucking", "Freight & trucking", _status(tonnage["direction"] if tonnage else None, "rising")),
     ]
