@@ -625,8 +625,14 @@ function onCompareSearchChange(ev){
 
 function indexTo100(points){
   if(!points.length) return [];
-  const base = points[0].value || 1;
-  return points.map(p=>({date:p.date, value:(p.value/base)*100}));
+  const base = points[0].value;
+  if(base > 0) return points.map(p=>({date:p.date, value:(p.value/base)*100}));
+  // Base is zero or negative (e.g. an inverted yield-curve spread) -- dividing
+  // by it would flip the sign of every later move, so a series getting worse
+  // would render as a spike upward. Anchor at 100 and scale by the base's
+  // magnitude instead, which keeps the direction of change correct.
+  const scale = Math.abs(base) || 1;
+  return points.map(p=>({date:p.date, value: 100 + ((p.value-base)/scale)*100}));
 }
 
 function renderCompare(){
