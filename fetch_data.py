@@ -168,8 +168,6 @@ SERIES = [
     dict(id="MMMFFAQ027S", name="Money market fund assets",            cat="Markets & risk sentiment", src="fred", fmt="usd", unit="M", dec=0),
     dict(id="GC=F",        name="Gold",                                 cat="Markets & risk sentiment", src="yahoo", fmt="usd", unit="/oz", dec=2),
     dict(id="SI=F",        name="Silver",                               cat="Markets & risk sentiment", src="yahoo", fmt="usd", unit="/oz", dec=2),
-    dict(id="BTC-USD",     name="Bitcoin",                              cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=0),
-    dict(id="ETH-USD",     name="Ethereum",                             cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
     dict(id="KNX",         name="KNX stock price",                     cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
     dict(id="VNQ",         name="REIT index proxy (Vanguard VNQ)",     cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
     dict(id="^W5000",      name="Wilshire 5000 total market index",    cat="Markets & risk sentiment", src="yahoo", fmt="number", dec=2),
@@ -188,6 +186,13 @@ SERIES = [
     dict(id="SPY",         name="S&P 500 ETF (cap-weighted)",          cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
     dict(id="RSP",         name="S&P 500 ETF (equal-weighted)",        cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
     dict(id="^MOVE",       name="MOVE index (bond market volatility)", cat="Markets & risk sentiment", src="yahoo", fmt="index", dec=2),
+
+    # ---- Crypto & digital assets ----
+    dict(id="BTC-USD",     name="Bitcoin",                              cat="Crypto & digital assets", src="yahoo", fmt="usd", dec=0),
+    dict(id="ETH-USD",     name="Ethereum",                             cat="Crypto & digital assets", src="yahoo", fmt="usd", dec=2),
+    dict(id="SOL-USD",     name="Solana",                                cat="Crypto & digital assets", src="yahoo", fmt="usd", dec=2),
+    dict(id="COIN",        name="Coinbase stock",                       cat="Crypto & digital assets", src="yahoo", fmt="usd", dec=2),
+    dict(id="MSTR",        name="MicroStrategy stock (corporate BTC proxy)", cat="Crypto & digital assets", src="yahoo", fmt="usd", dec=2),
 
     # ---- Trade & global ----
     dict(id="BOPGSTB",     name="Trade balance",                       cat="Trade & global", src="fred", fmt="usd", unit="M", dec=0),
@@ -267,6 +272,8 @@ DERIVED = [
          cat="Markets & risk sentiment", a="RSP", b="SPY", fmt="number", dec=4),
     dict(op="rolling_corr", id="STOCK_BOND_CORRELATION", name="Stock/bond return correlation (60-day)",
          cat="Markets & risk sentiment", a="^GSPC", b="DGS10", window=60, fmt="number", dec=2),
+    dict(op="divide", id="ETH_BTC_RATIO", name="ETH / BTC ratio",
+         cat="Crypto & digital assets", a="ETH-USD", b="BTC-USD", fmt="number", dec=5),
 ]
 
 RECESSION_SERIES_ID = "USREC"
