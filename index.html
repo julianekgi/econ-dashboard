@@ -107,20 +107,7 @@
   .narrative-disclaimer{font-size:11px; color:var(--ink-soft); font-style:italic;}
   .chapter-narrative{font-size:12.5px; color:var(--ink-soft); margin:0 0 12px; padding:8px 12px; background:var(--line-soft); border-left:2px solid var(--burgundy); border-radius:0 4px 4px 0;}
 
-  .scoreboard-caption{font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-mute); margin-bottom:8px;}
-  .scoreboard-caption span{text-transform:none; letter-spacing:normal; font-style:italic;}
-  .scoreboard{display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:10px; margin-bottom:20px;}
-  .signal{border:1px solid var(--line); border-left:4px solid var(--ink-mute); border-radius:4px; padding:10px 12px; background:var(--card); cursor:pointer; transition:box-shadow 0.1s, border-color 0.1s;}
-  .signal:hover{border-color:var(--ink-mute); box-shadow:0 1px 5px rgba(27,26,24,0.08);}
-  .signal.green{border-left-color:var(--up);} .signal.yellow{border-left-color:var(--warn);}
-  .signal.red{border-left-color:var(--down);} .signal.gray{border-left-color:var(--ink-mute);}
-  .signal-label{font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-mute); display:flex; justify-content:space-between; align-items:center;}
-  .signal-dot{width:8px; height:8px; border-radius:50%; display:inline-block; flex-shrink:0;}
-  .signal-dot.green{background:var(--up);} .signal-dot.yellow{background:var(--warn);}
-  .signal-dot.red{background:var(--down);} .signal-dot.gray{background:var(--ink-mute);}
-  .signal-detail{font-size:12.5px; color:var(--ink-soft); margin-top:5px; line-height:1.4;}
-
-  .quickread{margin-bottom:20px;}
+.quickread{margin-bottom:20px;}
   .quickread-caption{font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-mute); margin-bottom:8px;}
   .quickread-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:10px;}
   .quickread-tile{border:1px solid var(--line); border-radius:4px; padding:12px 14px; background:var(--card); cursor:pointer; transition:box-shadow 0.1s, border-color 0.1s;}
@@ -166,9 +153,6 @@
   </div>
 
   <div class="narrative-banner" id="narrativeBanner"></div>
-
-  <div class="scoreboard-caption" id="scoreboardCaption">SIGNAL SCOREBOARD <span>— simple threshold rules on the data below, not a forecast. Click a tile to see the underlying series.</span></div>
-  <div class="scoreboard" id="scoreboard"></div>
 
   <div id="pinned"></div>
 
@@ -463,11 +447,6 @@ function setGroup(g){
   clearSearchBox();
   renderGroups(); renderTabs(); renderSections(); renderYoY();
 }
-function jumpToCategory(cat){
-  state.group = groupOfCategory(cat);
-  setCat(cat);
-}
-
 function renderTabs(){
   const cats = ["All"].concat(categoriesForGroup(state.group), [NEWS_TAB]);
   document.getElementById("tabs").innerHTML = cats.map(c=>
@@ -492,17 +471,6 @@ function renderNarrative(){
   const el = document.getElementById("narrativeBanner");
   if(!n || !n.headline){ el.style.display = "none"; return; }
   el.innerHTML = `<div class="narrative-headline">${n.headline}</div><div class="narrative-disclaimer">${n.disclaimer||""}</div>`;
-}
-
-function renderScoreboard(){
-  const el = document.getElementById("scoreboard");
-  const caption = document.getElementById("scoreboardCaption");
-  const sb = (DATA.narrative && DATA.narrative.scoreboard) || [];
-  if(!sb.length){ el.style.display = "none"; caption.style.display = "none"; return; }
-  el.innerHTML = sb.map(s => `<div class="signal ${s.status}" onclick="jumpToCategory('${s.cat.replace(/'/g,"\\'")}')" role="button" tabindex="0">
-      <div class="signal-label">${s.label}<span class="signal-dot ${s.status}"></span></div>
-      <div class="signal-detail">${s.detail}</div>
-    </div>`).join("");
 }
 
 function jumpToQuickRead(cat){
@@ -832,7 +800,6 @@ async function init(){
   asof.textContent = "Data as of " + new Date(DATA.generated_at).toLocaleString();
   asof.classList.remove("loading-shimmer");
   renderNarrative();
-  renderScoreboard();
   renderQuickRead();
   renderPinned();
   renderGroups();

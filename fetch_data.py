@@ -662,49 +662,6 @@ def build_narrative(output):
             freight_ch_status = "watch"
         chapters["Freight & trucking"] = {"text": "Freight: " + "; ".join(parts) + ".", "status": freight_ch_status}
 
-    # ---- Signal scoreboard: one red/yellow/green read per theme, reusing the
-    # trends already computed above. "Good"/"bad" direction is theme-specific
-    # (e.g. rising unemployment is bad, rising industrial production is good).
-    def _status(direction, good_direction):
-        if direction is None:
-            return "gray"
-        if direction == good_direction:
-            return "green"
-        if direction == "flat":
-            return "yellow"
-        return "red"
-
-    def _signal(label, cat, status):
-        chapter = chapters.get(cat)
-        detail = chapter["text"] if chapter else "Not enough data to read this signal yet."
-        return {"label": label, "cat": cat, "status": status, "detail": detail}
-
-    if curve_inverted:
-        policy_status = "red"
-    elif fedfunds and fedfunds["direction"] == "rising":
-        policy_status = "yellow"
-    elif fedfunds and fedfunds["direction"] == "falling":
-        policy_status = "green"
-    else:
-        policy_status = "yellow" if curve is not None else "gray"
-
-    if vix and vix.get("latest") is not None:
-        markets_status = "red" if vix["latest"] > 25 else ("yellow" if vix["latest"] > 15 else "green")
-    else:
-        markets_status = "gray"
-
-    scoreboard = [
-        _signal("Growth", "Growth & business cycle", _status(indpro["direction"] if indpro else None, "rising")),
-        _signal("Labor market", "Labor market", _status(unrate["direction"] if unrate else None, "falling")),
-        _signal("Consumer", "Consumer health", _status(retail["direction"] if retail else None, "rising")),
-        _signal("Housing", "Housing", _status(housing["direction"] if housing else None, "rising")),
-        _signal("Inflation", "Inflation", _status(cpi["direction"] if cpi else None, "falling")),
-        _signal("Monetary policy", "Monetary policy & rates", policy_status),
-        _signal("Distress & credit access", "Distress & credit access", _status(hy["direction"] if hy else None, "falling")),
-        _signal("Markets", "Markets & risk sentiment", markets_status),
-        _signal("Freight & trucking", "Freight & trucking", _status(tonnage["direction"] if tonnage else None, "rising")),
-    ]
-
     # Headline synthesis -- simple, transparent rules. Not a forecast.
     inflation_elevated = cpi is not None and cpi.get("direction") == "rising"
     growth_slowing = indpro is not None and indpro.get("direction") == "falling"
@@ -730,7 +687,6 @@ def build_narrative(output):
     output["narrative"] = {
         "headline": headline,
         "chapters": chapters,
-        "scoreboard": scoreboard,
         "disclaimer": ("Automated read from simple threshold rules on the data below -- a description of "
                         "current trends, not a forecast or investment recommendation."),
     }
