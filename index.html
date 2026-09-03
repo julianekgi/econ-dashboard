@@ -120,6 +120,17 @@
   .signal-dot.red{background:var(--down);} .signal-dot.gray{background:var(--ink-mute);}
   .signal-detail{font-size:12.5px; color:var(--ink-soft); margin-top:5px; line-height:1.4;}
 
+  .quickread{margin-bottom:20px;}
+  .quickread-caption{font-family:'IBM Plex Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-mute); margin-bottom:8px;}
+  .quickread-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:10px;}
+  .quickread-tile{border:1px solid var(--line); border-radius:4px; padding:12px 14px; background:var(--card); cursor:pointer; transition:box-shadow 0.1s, border-color 0.1s;}
+  .quickread-tile:hover{border-color:var(--ink-mute); box-shadow:0 1px 5px rgba(27,26,24,0.08);}
+  .quickread-tile-top{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:5px;}
+  .quickread-tile-name{font-family:'Source Serif 4', serif; font-weight:600; font-size:13.5px;}
+  .quickread-dot{width:9px; height:9px; border-radius:50%; display:inline-block; flex-shrink:0;}
+  .quickread-dot.good{background:#2E6B45;} .quickread-dot.watch{background:#9A6E23;} .quickread-dot.bad{background:#A32D2D;}
+  .quickread-tile-text{font-size:12.5px; color:var(--ink-soft); line-height:1.45;}
+
   .house-view{border:1px dashed var(--line); border-radius:6px; padding:8px 16px; margin-bottom:20px; background:var(--line-soft); display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;}
   .house-view-title{font-family:'Source Serif 4', serif; font-size:12.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; white-space:nowrap;}
   .house-view-pending{font-size:12px; color:var(--ink-mute); font-style:italic;}
@@ -167,6 +178,8 @@
   </div>
 
   <div class="ticker" id="ticker"></div>
+
+  <div class="quickread" id="quickRead"></div>
 
   <div class="groups-row">
     <div class="groups" id="groups"></div>
@@ -492,6 +505,26 @@ function renderScoreboard(){
     </div>`).join("");
 }
 
+function jumpToQuickRead(cat){
+  setCat(cat);
+  document.getElementById("sections").scrollIntoView({behavior:"smooth"});
+}
+
+function renderQuickRead(){
+  const el = document.getElementById("quickRead");
+  const chapters = (DATA.narrative && DATA.narrative.chapters) || {};
+  const cats = Object.keys(chapters);
+  if(!cats.length){ el.style.display = "none"; return; }
+  el.style.display = "";
+  el.innerHTML = `<div class="quickread-caption">QUICK READ</div><div class="quickread-grid">${cats.map(cat=>{
+    const ch = chapters[cat];
+    return `<div class="quickread-tile" onclick="jumpToQuickRead('${cat.replace(/'/g,"\\'")}')" role="button" tabindex="0">
+      <div class="quickread-tile-top"><span class="quickread-tile-name">${cat}</span><span class="quickread-dot ${ch.status}"></span></div>
+      <div class="quickread-tile-text">${ch.text}</div>
+    </div>`;
+  }).join("")}</div>`;
+}
+
 function renderPinned(){
   const el = document.getElementById("pinned");
   const pinned = [...getPinned()].filter(id => DATA.series[id]);
@@ -569,7 +602,7 @@ function renderSections(){
     el.innerHTML = cats.map(cat=>{
       const ids = Object.keys(DATA.series).filter(id=>DATA.series[id].category===cat);
       allIds.push(...ids);
-      const blurb = chapterText[cat] ? `<div class="chapter-narrative">${chapterText[cat]}</div>` : "";
+      const blurb = chapterText[cat] ? `<div class="chapter-narrative">${chapterText[cat].text}</div>` : "";
       return `<div class="section" id="${catSlug(cat)}"><div class="section-title">${cat}</div>${blurb}
         <table class="yoy compact-table"><tr><th>Series</th><th>Latest</th><th>Change (${state.range})</th><th></th></tr>${ids.map(compactRowHtml).join("")}</table></div>`;
     }).join("");
@@ -579,7 +612,7 @@ function renderSections(){
   el.innerHTML = cats.map(cat=>{
     const ids = Object.keys(DATA.series).filter(id=>DATA.series[id].category===cat);
     allIds.push(...ids);
-    const blurb = chapterText[cat] ? `<div class="chapter-narrative">${chapterText[cat]}</div>` : "";
+    const blurb = chapterText[cat] ? `<div class="chapter-narrative">${chapterText[cat].text}</div>` : "";
     return `<div class="section" id="${catSlug(cat)}"><div class="section-title">${cat}</div>${blurb}<div class="grid">${ids.map(cardHtml).join("")}</div></div>`;
   }).join("");
   attachChartsFor(allIds);
@@ -800,6 +833,7 @@ async function init(){
   asof.classList.remove("loading-shimmer");
   renderNarrative();
   renderScoreboard();
+  renderQuickRead();
   renderPinned();
   renderGroups();
   renderTabs(); renderRanges(); renderDensityToggle(); renderTicker(); renderSections();

@@ -511,7 +511,13 @@ def build_narrative(output):
             parts.append(f"jobless claims are {claims['direction']}")
         if payrolls:
             parts.append(f"payroll growth is {payrolls['direction']}")
-        chapters["Labor market"] = "Labor market: " + "; ".join(parts) + "."
+        if unrate and unrate["direction"] == "rising" and claims and claims["direction"] == "rising":
+            labor_status = "bad"
+        elif unrate and unrate["direction"] == "falling":
+            labor_status = "good"
+        else:
+            labor_status = "watch"
+        chapters["Labor market"] = {"text": "Labor market: " + "; ".join(parts) + ".", "status": labor_status}
 
     indpro = trend(output, "INDPRO", 6, 1.0)
     lei = trend(output, "USALOLITOAASTSAM", 6, 0.5)
@@ -521,7 +527,13 @@ def build_narrative(output):
             parts.append(f"industrial production is {indpro['direction']}")
         if lei:
             parts.append(f"the leading index is {lei['direction']}")
-        chapters["Growth & business cycle"] = "Growth: " + "; ".join(parts) + "."
+        if (indpro and indpro["direction"] == "rising") or (lei and lei["direction"] == "rising"):
+            growth_status = "good"
+        elif (indpro and indpro["direction"] == "falling") and (lei and lei["direction"] == "falling"):
+            growth_status = "bad"
+        else:
+            growth_status = "watch"
+        chapters["Growth & business cycle"] = {"text": "Growth: " + "; ".join(parts) + ".", "status": growth_status}
 
     retail = trend(output, "RSAFS", 6, 1.0)
     savings = trend(output, "PSAVERT", 6, 3.0)
@@ -531,7 +543,15 @@ def build_narrative(output):
             parts.append(f"retail sales are {retail['direction']}")
         if savings:
             parts.append(f"the savings rate is {savings['direction']}")
-        chapters["Consumer health"] = "Consumer: " + "; ".join(parts) + "."
+        if retail and retail["direction"] == "rising" and savings and savings["direction"] == "falling":
+            consumer_status = "watch"
+        elif retail and retail["direction"] == "rising" and savings and savings["direction"] in ("flat", "rising"):
+            consumer_status = "good"
+        elif retail and retail["direction"] == "falling":
+            consumer_status = "bad"
+        else:
+            consumer_status = "watch"
+        chapters["Consumer health"] = {"text": "Consumer: " + "; ".join(parts) + ".", "status": consumer_status}
 
     housing = trend(output, "HOUST", 6, 3.0)
     mortgage = trend(output, "MORTGAGE30US", 6, 2.0)
@@ -541,7 +561,13 @@ def build_narrative(output):
             parts.append(f"housing starts are {housing['direction']}")
         if mortgage:
             parts.append(f"the 30-year mortgage rate is {mortgage['direction']} ({mortgage['latest']:.2f}%)")
-        chapters["Housing"] = "Housing: " + "; ".join(parts) + "."
+        if housing and housing["direction"] == "falling" and mortgage and mortgage["direction"] == "rising":
+            housing_status = "bad"
+        elif housing and housing["direction"] == "rising":
+            housing_status = "good"
+        else:
+            housing_status = "watch"
+        chapters["Housing"] = {"text": "Housing: " + "; ".join(parts) + ".", "status": housing_status}
 
     cpi = trend(output, "CPIAUCSL", 12, 2.0)
     corepce = trend(output, "PCEPILFE", 12, 2.0)
@@ -551,7 +577,13 @@ def build_narrative(output):
             parts.append(f"headline CPI is {cpi['direction']} ({cpi.get('pct_change','?')}% vs a year back)")
         if corepce:
             parts.append(f"core PCE trend is {corepce['direction']}")
-        chapters["Inflation"] = "Inflation: " + "; ".join(parts) + "."
+        if (cpi and cpi["direction"] == "rising") or (corepce and corepce["direction"] == "rising"):
+            inflation_status = "bad"
+        elif (cpi and cpi["direction"] == "falling") and (corepce and corepce["direction"] == "falling"):
+            inflation_status = "good"
+        else:
+            inflation_status = "watch"
+        chapters["Inflation"] = {"text": "Inflation: " + "; ".join(parts) + ".", "status": inflation_status}
 
     curve = trend(output, "T10Y2Y", 1, 0.01)
     fedfunds = trend(output, "FEDFUNDS", 6, 1.0)
@@ -562,14 +594,27 @@ def build_narrative(output):
             parts.append(f"the 2s10s curve is {'inverted' if curve_inverted else 'positively sloped'}")
         if fedfunds:
             parts.append(f"the fed funds rate is {fedfunds['direction']}")
-        chapters["Monetary policy & rates"] = "Policy: " + "; ".join(parts) + "."
+        if curve_inverted:
+            policy_ch_status = "bad"
+        elif curve is not None and not curve_inverted and fedfunds and fedfunds["direction"] in ("flat", "falling"):
+            policy_ch_status = "good"
+        else:
+            policy_ch_status = "watch"
+        chapters["Monetary policy & rates"] = {"text": "Policy: " + "; ".join(parts) + ".", "status": policy_ch_status}
 
     hy = trend(output, "BAMLH0A0HYM2", 3, 5.0)
     small_firm_standards = trend(output, "DRTSCIS", 6, 5.0)
     if hy or small_firm_standards:
+        if small_firm_standards and small_firm_standards["direction"] == "rising" and hy and hy["direction"] == "rising":
+            credit_ch_status = "bad"
+        elif (small_firm_standards and small_firm_standards["direction"] in ("falling", "flat")
+                and hy and hy["direction"] in ("falling", "flat")):
+            credit_ch_status = "good"
+        else:
+            credit_ch_status = "watch"
         if (small_firm_standards and small_firm_standards["direction"] == "rising"
                 and hy and hy["direction"] in ("flat", "falling")):
-            chapters["Distress & credit access"] = (
+            credit_text = (
                 f"Distress & credit access: small-firm bank lending standards are tightening "
                 f"({small_firm_standards['latest']:.1f}) while the high-yield spread is {hy['direction']} "
                 f"({hy['latest']:.2f}%) -- private and bank-financed companies may be feeling credit "
@@ -582,7 +627,8 @@ def build_narrative(output):
                              f"({small_firm_standards['latest']:.1f})")
             if hy:
                 parts.append(f"the high-yield spread is {hy['direction']} ({hy['latest']:.2f}%)")
-            chapters["Distress & credit access"] = "Distress & credit access: " + "; ".join(parts) + "."
+            credit_text = "Distress & credit access: " + "; ".join(parts) + "."
+        chapters["Distress & credit access"] = {"text": credit_text, "status": credit_ch_status}
 
     vix = trend(output, "VIXCLS", 1, 10.0)
     spx = trend(output, "^GSPC", 6, 3.0)
@@ -592,7 +638,13 @@ def build_narrative(output):
             parts.append(f"the S&P 500 is {spx['direction']}")
         if vix:
             parts.append(f"volatility is {'elevated' if vix['latest'] and vix['latest'] > 20 else 'subdued'} (VIX {vix['latest']:.1f})")
-        chapters["Markets & risk sentiment"] = "Markets: " + "; ".join(parts) + "."
+        if vix and vix.get("latest") is not None and vix["latest"] > 20:
+            markets_ch_status = "bad"
+        elif spx and spx["direction"] == "rising" and vix and vix.get("latest") is not None and vix["latest"] <= 20:
+            markets_ch_status = "good"
+        else:
+            markets_ch_status = "watch"
+        chapters["Markets & risk sentiment"] = {"text": "Markets: " + "; ".join(parts) + ".", "status": markets_ch_status}
 
     tonnage = trend(output, "TRUCKD11", 6, 2.0)
     diesel = trend(output, "GASDESW", 6, 5.0)
@@ -602,7 +654,13 @@ def build_narrative(output):
             parts.append(f"truck tonnage is {tonnage['direction']}")
         if diesel:
             parts.append(f"diesel prices are {diesel['direction']} (${diesel['latest']:.2f}/gal)")
-        chapters["Freight & trucking"] = "Freight: " + "; ".join(parts) + "."
+        if tonnage and tonnage["direction"] == "falling" and diesel and diesel["direction"] == "rising":
+            freight_ch_status = "bad"
+        elif tonnage and tonnage["direction"] == "rising":
+            freight_ch_status = "good"
+        else:
+            freight_ch_status = "watch"
+        chapters["Freight & trucking"] = {"text": "Freight: " + "; ".join(parts) + ".", "status": freight_ch_status}
 
     # ---- Signal scoreboard: one red/yellow/green read per theme, reusing the
     # trends already computed above. "Good"/"bad" direction is theme-specific
@@ -617,8 +675,9 @@ def build_narrative(output):
         return "red"
 
     def _signal(label, cat, status):
-        return {"label": label, "cat": cat, "status": status,
-                "detail": chapters.get(cat, "Not enough data to read this signal yet.")}
+        chapter = chapters.get(cat)
+        detail = chapter["text"] if chapter else "Not enough data to read this signal yet."
+        return {"label": label, "cat": cat, "status": status, "detail": detail}
 
     if curve_inverted:
         policy_status = "red"
