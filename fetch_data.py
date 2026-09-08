@@ -169,6 +169,7 @@ SERIES = [
     dict(id="GC=F",        name="Gold",                                 cat="Markets & risk sentiment", src="yahoo", fmt="usd", unit="/oz", dec=2),
     dict(id="SI=F",        name="Silver",                               cat="Markets & risk sentiment", src="yahoo", fmt="usd", unit="/oz", dec=2),
     dict(id="KNX",         name="KNX stock price",                     cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
+    dict(id="KDK",         name="Kodiak AI stock price (autonomous trucking)", cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
     dict(id="VNQ",         name="REIT index proxy (Vanguard VNQ)",     cat="Markets & risk sentiment", src="yahoo", fmt="usd", dec=2),
     dict(id="^W5000",      name="Wilshire 5000 total market index",    cat="Markets & risk sentiment", src="yahoo", fmt="number", dec=2),
     dict(id="^DJT",        name="Dow Jones Transportation Average",    cat="Markets & risk sentiment", src="yahoo", fmt="number", dec=2),
