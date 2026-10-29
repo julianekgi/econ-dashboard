@@ -59,7 +59,6 @@ SERIES = [
     dict(id="AWHMAN",      name="Average weekly hours (manufacturing)", cat="Growth & business cycle", src="fred", fmt="number", unit=" hrs", dec=1),
     dict(id="GACDFSA066MSFRBPHI", name="Philly Fed manufacturing index", cat="Growth & business cycle", src="fred", fmt="number", dec=1),
     dict(id="GACDISA066MSFRBNY", name="NY Fed Empire State manufacturing index", cat="Growth & business cycle", src="fred", fmt="number", dec=1),
-    dict(id="USSLIND",     name="Leading index (St. Louis Fed model)",  cat="Growth & business cycle", src="fred", fmt="number", dec=2),
     dict(id="ISRATIO",     name="Business inventories / sales ratio",  cat="Growth & business cycle", src="fred", fmt="number", dec=2),
 
     # ---- Labor market: is hiring holding up or cracking? ----
