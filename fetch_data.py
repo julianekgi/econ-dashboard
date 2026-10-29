@@ -146,6 +146,10 @@ SERIES = [
 
     # ---- Distress & credit access: is financing getting harder to find? ----
     dict(id="BAMLH0A0HYM2", name="High-yield credit spread",          cat="Distress & credit access", src="fred", fmt="pct", dec=2),
+    dict(id="BAMLH0A3HYC", name="CCC & lower high-yield spread",      cat="Distress & credit access", src="fred", fmt="pct", dec=2),
+    dict(id="BAMLH0A3HYCEY", name="CCC & lower high-yield effective yield", cat="Distress & credit access", src="fred", fmt="pct", dec=2),
+    dict(id="BAMLH0A2HYB", name="Single-B high-yield spread",         cat="Distress & credit access", src="fred", fmt="pct", dec=2),
+    dict(id="BAMLH0A1HYBB", name="BB high-yield spread",              cat="Distress & credit access", src="fred", fmt="pct", dec=2),
     dict(id="BAMLC0A0CM",  name="Investment-grade credit spread",     cat="Distress & credit access", src="fred", fmt="pct", dec=2),
     dict(id="DAAA",        name="Moody's Aaa corporate yield",        cat="Distress & credit access", src="fred", fmt="pct", dec=2),
     dict(id="DBAA",        name="Moody's Baa corporate yield",        cat="Distress & credit access", src="fred", fmt="pct", dec=2),
@@ -257,6 +261,8 @@ DERIVED = [
          cat="Markets & risk sentiment", a="^DJT", b="^DJI", fmt="number", dec=2),
     dict(op="divide100", id="COPPER_GOLD_RATIO", name="Copper/Gold ratio (\"Dr. Copper\")",
          cat="Commodities & energy", a="PCOPPUSDM", b="GC=F", fmt="number", dec=2),
+    dict(op="divide", id="CCC_BB_SPREAD_RATIO", name="CCC-to-BB spread ratio (credit stress gauge)",
+         cat="Distress & credit access", a="BAMLH0A3HYC", b="BAMLH0A1HYBB", fmt="number", dec=2),
     dict(op="divide", id="BEVERIDGE_RATIO", name="Job openings per unemployed (Beveridge ratio)",
          cat="Labor market", a="JTSJOL", b="UNEMPLOY", fmt="number", dec=2),
     dict(op="divide", id="CONSUMER_DISC_STAPLES_RATIO", name="Consumer discretionary / staples ratio",
